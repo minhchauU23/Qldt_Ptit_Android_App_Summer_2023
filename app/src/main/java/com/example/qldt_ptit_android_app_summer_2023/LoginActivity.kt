@@ -10,6 +10,7 @@ import android.widget.EditText
 import android.widget.Toast
 import com.example.qldt_ptit_android_app_summer_2023.api.QldtService
 import com.example.qldt_ptit_android_app_summer_2023.database.QldtHelper
+import com.example.qldt_ptit_android_app_summer_2023.model.Student
 import com.example.qldt_ptit_android_app_summer_2023.model.User
 import kotlinx.coroutines.*
 import retrofit2.Call
@@ -80,10 +81,14 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
 
-            var getInforStudentJob = launch {
+            var getInforJob = launch {
                 loginJob.join()
                 if(user.isInitialized()){
-                    
+                    when(user.roles){
+                        "SINHVIEN"->{
+
+                        }
+                    }
                 }
             }
 

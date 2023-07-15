@@ -6,6 +6,8 @@ import android.database.sqlite.SQLiteDatabase.CursorFactory
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import com.example.qldt_ptit_android_app_summer_2023.model.User
+import com.google.gson.annotations.SerializedName
+import java.util.*
 
 class QldtHelper: SQLiteOpenHelper{
     companion object{
@@ -37,6 +39,29 @@ class QldtHelper: SQLiteOpenHelper{
             "${userColumnRole} TEXT, " +
             "${userColumnAccessToken} TEXT, " +
             "${userColumnTokenType} TEXT );"
+
+
+    val tblStudent = "student"
+    val studentColumnStudentCode = "student_code"
+    val studentColumnGender = "gender"
+    val studentColumnDateOfBirth = "dob"
+    val studentColumnPlaceOfBirth = "pob"
+    val studentColumnNation = "nation"
+    val studentColumnReligion = "religion"
+    val studentColumnPhone = "phone"
+    val studentColumnEmail = "email"
+    val studentColumnIdNumber = "idnum"
+    val studentColumnClass = "class"
+    val studentColumnIndusSector = "indus_sector"
+    val studentColumnMajor = "major"
+    val studentColumnDepartment = "department"
+    val studentColumnTypeOfTraining = "type_of_training"
+    val studentColumnSchoolYear = "school_year"
+    val studentColumnAdviserCode = "adviser_code"
+    val studentColumnAdviserName = "adviser_name"
+    val studentColumnInCode = "incode"
+    val studentColumnOutCode = "outcode"
+    
 
 
     override fun onCreate(p0: SQLiteDatabase?) {
