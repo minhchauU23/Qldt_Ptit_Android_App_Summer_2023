@@ -1,13 +1,21 @@
 package com.example.qldt_ptit_android_app_summer_2023.model
 
 import com.google.gson.annotations.SerializedName
+import java.text.SimpleDateFormat
 import java.util.Date
 
-class Student(username: String, password: String) : User(username, password) {
+class Student(username: String, password: String) : User(username, password), java.io.Serializable{
+
+    constructor(user: User) : this(user.username, user.password) {
+        this.fullName = user.fullName
+        this.roles = user.roles
+        this.accessToken = user.accessToken
+        this.tokenType = user.tokenType
+    }
     @SerializedName("gioi_tinh")
     var gender: String? = null
     @SerializedName("ngay_sinh")
-    var dateOfBirth: Date? = null
+    var dateOfBirth: String? = null
     @SerializedName("noi_sinh")
     var placeOfBirth: String? = null
     @SerializedName("dan_toc")
@@ -16,6 +24,7 @@ class Student(username: String, password: String) : User(username, password) {
     var religion: String? = null
     @SerializedName("dien_thoai")
     var phone: String? = null
+    @SerializedName("email")
     var email: String? = null
     @SerializedName("so_cmnd")
     var idNum: String? = null
@@ -39,4 +48,12 @@ class Student(username: String, password: String) : User(username, password) {
     var inCode: Int? = null
     @SerializedName("nhhk_ra")
     var outCode: Int? = null
+
+    fun getDateOfBirth(): Date{
+        return SimpleDateFormat("dd/MM/yyyy").parse(dateOfBirth)
+    }
+
+    override fun toString(): String {
+        return "$phone $email"
+    }
 }

@@ -1,5 +1,7 @@
 package com.example.qldt_ptit_android_app_summer_2023.api
 
+import com.example.qldt_ptit_android_app_summer_2023.model.Student
+import com.example.qldt_ptit_android_app_summer_2023.model.StudentRespone
 import com.example.qldt_ptit_android_app_summer_2023.model.User
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -10,6 +12,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.create
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
+import retrofit2.http.Header
 import retrofit2.http.POST
 
 interface QldtService {
@@ -27,4 +30,7 @@ interface QldtService {
     @FormUrlEncoded
     suspend fun login(@Field("username") username: String, @Field("password") password: String,
               @Field("grant_type") grantType: String = "password") : Response<User>
+
+    @POST("dkmh/w-locsinhvieninfo")
+    suspend fun getInfor(@Header("Authorization") authorization: String) : Response<StudentRespone>
 }

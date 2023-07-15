@@ -41,14 +41,14 @@ class LoginActivity : AppCompatActivity() {
                 if(isConnectInternet())
                     callApi(user)
                 else loginWithoutInternet(user)
-                Log.d("user", user.accessToken)
+//                Log.d("user", user.accessToken)
             }
             else Toast.makeText(applicationContext, "Invalid username or password", Toast.LENGTH_LONG)
         }
     }
 
     fun isConnectInternet() : Boolean{
-        return false
+        return true
     }
 
     fun loginWithoutInternet(user: User){
@@ -77,7 +77,7 @@ class LoginActivity : AppCompatActivity() {
                 loginJob.join()
                 if(user.isInitialized()){
                     dbHelper.insertUser(user)
-                    Log.d("insert", "inserting user with name = ${user.fullName}")
+//                    Log.d("insert", "inserting user with name = ${user.fullName}")
                 }
             }
 
@@ -86,7 +86,20 @@ class LoginActivity : AppCompatActivity() {
                 if(user.isInitialized()){
                     when(user.roles){
                         "SINHVIEN"->{
-
+                            var respone = retrofit.getInfor("${user.tokenType} ${user.accessToken}")
+                            var body = respone.body()
+                            if(respone.code() == 200){
+                                var student = body?.data
+                                student?.username = user.username
+                                student?.password = user.password
+                                student?.fullName = user.fullName
+                                student?.roles = user.roles
+                                student?.accessToken = user.accessToken
+                                student?.tokenType = user.tokenType
+                                dbHelper.insertStudent(student!!)
+//                                var studentTestGet = dbHelper.getStudent(user)
+//                                Log.d("get student", studentTestGet?.dateOfBirth!!)
+                            }
                         }
                     }
                 }
