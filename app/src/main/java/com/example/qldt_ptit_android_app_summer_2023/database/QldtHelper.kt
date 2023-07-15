@@ -55,7 +55,7 @@ class QldtHelper: SQLiteOpenHelper{
     }
 
     fun getUser(user: User): Boolean{
-        var query = "SELECT * FROM ${tblUser} WHERE ${userColumUsername} = '${user.username}' AND ${userColumnPassword} = '${user.password}'; "
+        var query = "SELECT * FROM ${tblUser} WHERE UPPER(${userColumUsername}) = UPPER('${user.username}') AND ${userColumnPassword} = '${user.password}'; "
         var cur = writableDatabase.rawQuery(query, null)
         if(cur.moveToNext()){
             user.fullName = cur.getString(2)
