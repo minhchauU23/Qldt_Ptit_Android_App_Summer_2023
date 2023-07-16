@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="mHome"
+        android:title="Home"
+        android:icon="@drawable/ic_baseline_home_24"
+        >
+    </item>
+    <item android:id="mTkb"
+        android:title="Thời khóa biểu"
+        android:icon="@drawable/ic_baseline_tkb_24"
+        >
+    </item>
+    <item android:id="mDiem"
+        android:title="Điểm"
+        android:icon="@drawable/ic_baseline_scoreboard_24"
+        >
+    </item>
+    <item android:id="mLichThi"
+        android:title="Lịch thi"
+        android:icon="@drawable/ic_baseline_assignment_24"
+        >
+    </item>
+    <item android:id="mInfor"
+        android:title="Cá nhân"
+        android:icon="@drawable/ic_baseline_infor_24"
+        >
+    </item>
+
+</menu>
