@@ -3,16 +3,13 @@ package com.example.qldt_ptit_android_app_summer_2023.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteDatabase.CursorFactory
 import android.database.sqlite.SQLiteOpenHelper
-import android.database.sqlite.SQLiteQuery
-import android.database.sqlite.SQLiteStatement
 import android.util.Log
+import com.example.qldt_ptit_android_app_summer_2023.model.Post
 import com.example.qldt_ptit_android_app_summer_2023.model.Student
 import com.example.qldt_ptit_android_app_summer_2023.model.User
-import com.google.gson.annotations.SerializedName
 import java.text.SimpleDateFormat
-import java.util.*
+import kotlin.collections.ArrayList
 
 class QldtHelper: SQLiteOpenHelper{
     companion object{
@@ -91,10 +88,24 @@ class QldtHelper: SQLiteOpenHelper{
             " REFERENCES $tblUser($userColumUsername)" +
             " );"
 
+    val tblPost = "post"
+    val postColumnID = "id"
+    val postColumnTitle = "title"
+    val postColumnContent = "content"
+    val postColumnPostingDate = "posting_date"
+    val postColumnCorrectingDate = "correcting_date"
+    val createTablePost = "CREATE TABLE IF NOT EXISTS $tblPost(" +
+            " $postColumnID TEXT PRIMARY KEY ," +
+            " $postColumnTitle TEXT, " +
+            " $postColumnContent TEXT, " +
+            " $postColumnPostingDate TEXT, " +
+            " $postColumnCorrectingDate TEXT" +
+            ");"
 
     override fun onCreate(p0: SQLiteDatabase?) {
         p0?.execSQL(createTableUser)
         p0?.execSQL(createTableStudent)
+        p0?.execSQL(createTablePost)
     }
 
     override fun onUpgrade(p0: SQLiteDatabase?, p1: Int, p2: Int) {
@@ -205,4 +216,27 @@ class QldtHelper: SQLiteOpenHelper{
         else
             return null
     }
+
+    fun upsertPost(post: Post){
+        var query = "INSERT OR REPLACE INTO $tblPost VALUES(?, ?, ?, ?, ?);"
+        var sqlStatment = writableDatabase.compileStatement(query)
+        sqlStatment.bindString(1, post.id)
+        sqlStatment.bindString(2, post.title)
+        sqlStatment.bindString(3, post.content)
+        sqlStatment.bindString(4, post.postingDate)
+        sqlStatment.bindString(5, post.correctionDate)
+        sqlStatment.execute()
+        Log.d("upsert post", "upserting post with title = ${post.title}")
+    }
+
+    fun getPosts(): ArrayList<Post>?{
+        var listPosts = arrayListOf<Post>()
+        var query = "SELECT * FROM $tblPost;"
+        var cursor = writableDatabase.rawQuery(query, null)
+        while(cursor.moveToNext()){
+            listPosts.add(Post(cursor.getString(0),cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4) ))
+        }
+        return listPosts
+    }
+
 }

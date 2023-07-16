@@ -121,7 +121,13 @@ class LoginActivity : AppCompatActivity() {
                 ordering.add(second)
                 filter.addAdditional("ordering", ordering)
                 var respone = retrofit.getPostsHome(filter)
-                Log.d("rs", respone.body()!!.listPostRespone.lsPost.get(0).content)
+                if(respone.code() == 200){
+                    var listPost = respone.body()!!.listPostRespone.lsPost
+                    for(post in listPost){
+                        dbHelper.upsertPost(post)
+                    }
+                }
+
             }
 
             var switchJob = launch {
