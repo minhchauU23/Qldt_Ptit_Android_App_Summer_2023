@@ -1,5 +1,6 @@
 package com.example.qldt_ptit_android_app_summer_2023
 
+import android.content.Intent
 import android.database.sqlite.SQLiteDatabase
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -41,7 +42,11 @@ class LoginActivity : AppCompatActivity() {
                 if(isConnectInternet())
                     callApi(user)
                 else loginWithoutInternet(user)
-//                Log.d("user", user.accessToken)
+                if(user.isInitialized()){
+                    var intent = Intent(applicationContext, MainActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
             }
             else Toast.makeText(applicationContext, "Invalid username or password", Toast.LENGTH_LONG)
         }
