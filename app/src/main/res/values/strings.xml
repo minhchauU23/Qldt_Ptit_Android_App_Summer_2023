@@ -3,4 +3,9 @@
     <string name="btn_login">Login</string>
     <string name="edt_username">Mssv</string>
     <string name="edt_password">Password</string>
+    <string name="mHome">Home</string>
+    <string name="mTkb">Thời khóa biểu</string>
+    <string name="mDiem">Điểm</string>
+    <string name="mLichThi">Lịch thi</string>
+    <string name="mInfor">Cá nhân</string>
 </resources>
