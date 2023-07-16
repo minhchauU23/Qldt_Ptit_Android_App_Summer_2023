@@ -147,6 +147,33 @@ class QldtHelper: SQLiteOpenHelper{
 
     }
 
+    fun upsertStudent(student: Student){
+        var query = "INSERT OR REPLACE INTO $tblStudent VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+        var sqliteStatement = writableDatabase.compileStatement(query)
+        sqliteStatement.bindString(1, student.username.uppercase())
+        sqliteStatement.bindString(2, student.gender)
+        sqliteStatement.bindString(3, SimpleDateFormat("yyyy-MM-dd").format(student.getDateOfBirth()))
+        sqliteStatement.bindString(4, student.placeOfBirth)
+        sqliteStatement.bindString(5, student.nation)
+        sqliteStatement.bindString(6, student.religion)
+        sqliteStatement.bindString(7, student.phone)
+        sqliteStatement.bindString(8, student.email)
+        sqliteStatement.bindString(9, student.idNum)
+        sqliteStatement.bindString(9, student.gender)
+        sqliteStatement.bindString(10, student.clazz)
+        sqliteStatement.bindString(11, student.indusSector)
+        sqliteStatement.bindString(12, student.major)
+        sqliteStatement.bindString(13, student.department)
+        sqliteStatement.bindString(14, student.typeOfTraining)
+        sqliteStatement.bindString(15, student.schoolYear)
+        sqliteStatement.bindString(16, student.adviserCode)
+        sqliteStatement.bindString(17, student.adviserName)
+        sqliteStatement.bindLong(18, student.inCode!!.toLong())
+        sqliteStatement.bindLong(19, student.outCode!!.toLong())
+        sqliteStatement.execute()
+        Log.d("upsert student", "inserting student with email = ${student.email}")
+    }
+
     fun getStudent(user: User): Student?{
         var query = "SELECT * FROM $tblStudent WHERE UPPER($studentColumnStudentCode) = UPPER(?);"
         var cursor = writableDatabase.rawQuery(query, arrayOf(user.username))
