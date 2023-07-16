@@ -61,7 +61,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     fun callApi(user: User){
-        GlobalScope.launch(Dispatchers.IO) {
+        var cou = GlobalScope.launch(Dispatchers.IO) {
             var loginJob = launch {
                 var respone = retrofit.login(user.username, user.password)
                 Log.d("res code", respone.code().toString())
@@ -82,10 +82,14 @@ class LoginActivity : AppCompatActivity() {
                 loginJob.join()
                 if(user.isInitialized()){
                     dbHelper.insertUser(user)
-//                    Log.d("insert", "inserting user with name = ${user.fullName}")
                 }
             }
-
+            var switchJob = launch {
+                loginJob.join()
+                var intent = Intent(applicationContext, MainActivity::class.java)
+                startActivity(intent)
+                finish()
+            }
             var getInforJob = launch {
                 loginJob.join()
                 if(user.isInitialized()){
@@ -101,16 +105,12 @@ class LoginActivity : AppCompatActivity() {
                                 student?.roles = user.roles
                                 student?.accessToken = user.accessToken
                                 student?.tokenType = user.tokenType
-                                dbHelper.insertStudent(student!!)
-//                                var studentTestGet = dbHelper.getStudent(user)
-//                                Log.d("get student", studentTestGet?.dateOfBirth!!)
+                                dbHelper.upsertStudent(student!!)
                             }
                         }
                     }
                 }
             }
-
-
         }
     }
 
