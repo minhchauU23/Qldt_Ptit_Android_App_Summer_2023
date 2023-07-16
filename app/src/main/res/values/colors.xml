@@ -13,4 +13,5 @@
     <color name="dark_red"> #B30000</color>
     <color name="green">#06FF06</color>
     <color name="dark_green">#006400</color>
+    <color name="transparent">#ECC040FF</color>
 </resources>

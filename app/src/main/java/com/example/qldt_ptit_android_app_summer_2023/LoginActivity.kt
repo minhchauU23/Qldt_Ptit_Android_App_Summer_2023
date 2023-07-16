@@ -52,6 +52,9 @@ class LoginActivity : AppCompatActivity() {
                     startActivity(intent)
                     finish()
                 }
+                else{
+                    Toast.makeText(applicationContext, "Invalid username or password", Toast.LENGTH_LONG).show()
+                }
             }
             else Toast.makeText(applicationContext, "Invalid username or password", Toast.LENGTH_LONG)
         }
@@ -132,9 +135,12 @@ class LoginActivity : AppCompatActivity() {
 
             var switchJob = launch {
                 loginJob.join()
-                var intent = Intent(applicationContext, MainActivity::class.java)
-                startActivity(intent)
-                finish()
+                if(user.isInitialized()){
+                    var intent = Intent(applicationContext, MainActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
+
             }
 
             var getInforJob = launch {
