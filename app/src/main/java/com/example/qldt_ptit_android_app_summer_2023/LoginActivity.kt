@@ -1,9 +1,13 @@
 package com.example.qldt_ptit_android_app_summer_2023
 
+import android.content.Context
 import android.content.Intent
 import android.database.sqlite.SQLiteDatabase
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.AndroidException
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -11,6 +15,7 @@ import android.widget.EditText
 import android.widget.Toast
 import com.example.qldt_ptit_android_app_summer_2023.api.QldtService
 import com.example.qldt_ptit_android_app_summer_2023.database.QldtHelper
+import com.example.qldt_ptit_android_app_summer_2023.model.FilterRequest
 import com.example.qldt_ptit_android_app_summer_2023.model.Student
 import com.example.qldt_ptit_android_app_summer_2023.model.User
 import kotlinx.coroutines.*
@@ -53,7 +58,18 @@ class LoginActivity : AppCompatActivity() {
     }
 
     fun isConnectInternet() : Boolean{
-        return true
+        var connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if(connectivityManager != null){
+            var capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+            if(capabilities != null){
+                if(capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) || capabilities.hasTransport(
+                        NetworkCapabilities.TRANSPORT_ETHERNET) || capabilities.hasTransport(
+                        NetworkCapabilities.TRANSPORT_WIFI)){
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     fun loginWithoutInternet(user: User){
@@ -84,12 +100,37 @@ class LoginActivity : AppCompatActivity() {
                     dbHelper.insertUser(user)
                 }
             }
+            var getHomePostJob = launch {
+                loginJob.join()
+                var filter = FilterRequest()
+                filter.addFilter("ky_hieu", "tb")
+                filter.addFilter("is_hien_thi", true)
+                filter.addFilter("is_hinh_dai_dien", false)
+                filter.addFilter("is_noi_dung", true)
+                filter.addFilter("so_luong_hinh_dai_dien", 0)
+
+                var paging = mutableMapOf<String, Int>()
+                paging.put("limit", 10)
+                paging.put("page", 1)
+
+                filter.addAdditional("paging", paging)
+                var ordering = arrayListOf <Map<String, Any>>()
+                var first = mapOf<String, Any>("name" to "do_uu_tien", "order_type" to 1)
+                var second = mapOf<String, Any>("name" to "ngay_dang_tin", "order_type" to 1)
+                ordering.add(first)
+                ordering.add(second)
+                filter.addAdditional("ordering", ordering)
+                var respone = retrofit.getPostsHome(filter)
+                Log.d("rs", respone.body()!!.listPostRespone.lsPost.get(0).content)
+            }
+
             var switchJob = launch {
                 loginJob.join()
                 var intent = Intent(applicationContext, MainActivity::class.java)
                 startActivity(intent)
                 finish()
             }
+
             var getInforJob = launch {
                 loginJob.join()
                 if(user.isInitialized()){
