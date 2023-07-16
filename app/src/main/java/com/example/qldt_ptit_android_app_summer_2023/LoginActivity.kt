@@ -10,6 +10,7 @@ import android.widget.EditText
 import android.widget.Toast
 import com.example.qldt_ptit_android_app_summer_2023.api.QldtService
 import com.example.qldt_ptit_android_app_summer_2023.database.QldtHelper
+import com.example.qldt_ptit_android_app_summer_2023.model.Student
 import com.example.qldt_ptit_android_app_summer_2023.model.User
 import kotlinx.coroutines.*
 import retrofit2.Call
@@ -40,14 +41,14 @@ class LoginActivity : AppCompatActivity() {
                 if(isConnectInternet())
                     callApi(user)
                 else loginWithoutInternet(user)
-                Log.d("user", user.accessToken)
+//                Log.d("user", user.accessToken)
             }
             else Toast.makeText(applicationContext, "Invalid username or password", Toast.LENGTH_LONG)
         }
     }
 
     fun isConnectInternet() : Boolean{
-        return false
+        return true
     }
 
     fun loginWithoutInternet(user: User){
@@ -76,14 +77,31 @@ class LoginActivity : AppCompatActivity() {
                 loginJob.join()
                 if(user.isInitialized()){
                     dbHelper.insertUser(user)
-                    Log.d("insert", "inserting user with name = ${user.fullName}")
+//                    Log.d("insert", "inserting user with name = ${user.fullName}")
                 }
             }
 
-            var getInforStudentJob = launch {
+            var getInforJob = launch {
                 loginJob.join()
                 if(user.isInitialized()){
-                    
+                    when(user.roles){
+                        "SINHVIEN"->{
+                            var respone = retrofit.getInfor("${user.tokenType} ${user.accessToken}")
+                            var body = respone.body()
+                            if(respone.code() == 200){
+                                var student = body?.data
+                                student?.username = user.username
+                                student?.password = user.password
+                                student?.fullName = user.fullName
+                                student?.roles = user.roles
+                                student?.accessToken = user.accessToken
+                                student?.tokenType = user.tokenType
+                                dbHelper.insertStudent(student!!)
+//                                var studentTestGet = dbHelper.getStudent(user)
+//                                Log.d("get student", studentTestGet?.dateOfBirth!!)
+                            }
+                        }
+                    }
                 }
             }
 
