@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
+import com.example.qldt_ptit_android_app_summer_2023.model.HocKy
 import com.example.qldt_ptit_android_app_summer_2023.model.Post
 import com.example.qldt_ptit_android_app_summer_2023.model.Student
 import com.example.qldt_ptit_android_app_summer_2023.model.User
@@ -102,10 +103,23 @@ class QldtHelper: SQLiteOpenHelper{
             " $postColumnCorrectingDate TEXT" +
             ");"
 
+    val tblHocKy = "hocky"
+    val hocKyColumnID = "id"
+    val hocKyColumnDes = "des"
+    val hocKyColumnStartDate = "start_date"
+    val hockyColumnEndDate = "end_date"
+    val createTableHocKy = "CREATE TABLE IF NOT EXISTS $tblHocKy (" +
+            " $hocKyColumnID INT PRIMARY KEY," +
+            " $hocKyColumnDes TEXT," +
+            " $hocKyColumnStartDate DATE," +
+            " $hockyColumnEndDate DATE" +
+            ");"
+
     override fun onCreate(p0: SQLiteDatabase?) {
         p0?.execSQL(createTableUser)
         p0?.execSQL(createTableStudent)
         p0?.execSQL(createTablePost)
+        p0?.execSQL(createTableHocKy)
     }
 
     override fun onUpgrade(p0: SQLiteDatabase?, p1: Int, p2: Int) {
@@ -239,4 +253,22 @@ class QldtHelper: SQLiteOpenHelper{
         return listPosts
     }
 
+    fun upsertHocKy(hocky: HocKy){
+        val query = "INSERT OR REPLACE INTO $tblHocKy VALUES(${hocky.id}, '${hocky.description}', '${SimpleDateFormat("yyyy-MM-dd").format(hocky.getStartDate())}', '${SimpleDateFormat("yyyy-MM-dd").format(hocky.getEndDate())}');"
+        writableDatabase.execSQL(query)
+        Log.d("hocky", "upserting hoc ky with des = ${hocky.description}")
+    }
+
+    fun getAllHocKy(): ArrayList<HocKy>{
+        val query = "SELECT * FROM $tblHocKy order by $hockyColumnEndDate desc;"
+        var cursor = writableDatabase.rawQuery(query, null)
+        var listHocKy = arrayListOf<HocKy>()
+        while (cursor.moveToNext()){
+            listHocKy.add(HocKy(cursor.getInt(0), cursor.getString(1),
+                SimpleDateFormat("dd/MM/yyyy").format(SimpleDateFormat("yyyy-MM-dd").parse( cursor.getString(2))),
+                SimpleDateFormat("dd/MM/yyyy").format(SimpleDateFormat("yyyy-MM-dd").parse( cursor.getString(3)))
+                ))
+        }
+        return listHocKy
+    }
 }
