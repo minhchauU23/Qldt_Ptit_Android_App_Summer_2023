@@ -2,12 +2,10 @@ package com.example.qldt_ptit_android_app_summer_2023
 
 import android.content.Context
 import android.content.Intent
-import android.database.sqlite.SQLiteDatabase
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.AndroidException
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -16,11 +14,9 @@ import android.widget.Toast
 import com.example.qldt_ptit_android_app_summer_2023.api.QldtService
 import com.example.qldt_ptit_android_app_summer_2023.database.QldtHelper
 import com.example.qldt_ptit_android_app_summer_2023.model.FilterRequest
-import com.example.qldt_ptit_android_app_summer_2023.model.Student
+import com.example.qldt_ptit_android_app_summer_2023.model.HocKy
 import com.example.qldt_ptit_android_app_summer_2023.model.User
 import kotlinx.coroutines.*
-import retrofit2.Call
-import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 
@@ -47,14 +43,7 @@ class LoginActivity : AppCompatActivity() {
                 if(isConnectInternet())
                     callApi(user)
                 else loginWithoutInternet(user)
-                if(user.isInitialized()){
-                    var intent = Intent(applicationContext, MainActivity::class.java)
-                    startActivity(intent)
-                    finish()
-                }
-                else{
-                    Toast.makeText(applicationContext, "Invalid username or password", Toast.LENGTH_LONG).show()
-                }
+
             }
             else Toast.makeText(applicationContext, "Invalid username or password", Toast.LENGTH_LONG)
         }
@@ -76,7 +65,14 @@ class LoginActivity : AppCompatActivity() {
     }
 
     fun loginWithoutInternet(user: User){
-        dbHelper.getUser(user)
+        if(dbHelper.getUser(user)){
+            var intent = Intent(applicationContext, MainActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+        else{
+            Toast.makeText(applicationContext, "Invalid username or password", Toast.LENGTH_LONG).show()
+        }
     }
 
     fun callApi(user: User){
@@ -90,6 +86,7 @@ class LoginActivity : AppCompatActivity() {
                     user.roles = body?.roles!!
                     user.accessToken = body?.accessToken!!
                     user.tokenType = body?.tokenType!!
+                    Log.d("user", user.roles)
                 }
                 else{
                     withContext(Dispatchers.Main){
@@ -160,6 +157,29 @@ class LoginActivity : AppCompatActivity() {
                                 student?.tokenType = user.tokenType
                                 dbHelper.upsertStudent(student!!)
                             }
+                        }
+                    }
+                }
+            }
+
+            var getHocKyJob = launch {
+                loginJob.join()
+                if(user.isInitialized()){
+                    var filter = FilterRequest()
+                    filter.addFilter("is_tieng_anh", null)
+                    filter.addAdditional("paging", mapOf("limit" to 100, "page" to 1))
+                    var ordering = mapOf<String, Any>("name" to "hoc_ky", "order_type" to 1)
+                    filter.addAdditional("ordering", arrayOf(ordering))
+                    var respone = retrofit.getHocKy("${user.tokenType} ${user.accessToken}", filter)
+                    if(respone.code() == 200){
+                        Log.d("hocky", respone.body().toString())
+                        var lsHocKy = respone.body()!!.listHocKyRespone.listHocKy
+                        for(hocky in lsHocKy){
+                            dbHelper.upsertHocKy(hocky)
+                        }
+                        var checkGetHK: ArrayList<HocKy> = dbHelper.getAllHocKy()
+                        for(hk in checkGetHK){
+                            Log.d("get hk", hk.toString())
                         }
                     }
                 }
