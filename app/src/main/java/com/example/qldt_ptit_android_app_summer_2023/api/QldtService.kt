@@ -35,4 +35,7 @@ interface QldtService {
 
     @POST("web/w-locdsbaiviet")
     suspend fun getPostsHome(@Body filter: FilterRequest): Response<HomePostRespone>
+
+    @POST("sch/w-locdshockytkbuser")
+    suspend fun getHocKy(@Header("Authorization") authorization: String, @Body filter: FilterRequest): Response<HocKyRespone>
 }
