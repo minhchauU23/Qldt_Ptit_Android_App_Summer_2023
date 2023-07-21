@@ -9,4 +9,5 @@ class FilterRequest {
     fun addAdditional(key: String, value: Any?){
         additional.put(key, value)
     }
+
 }

@@ -38,4 +38,7 @@ interface QldtService {
 
     @POST("sch/w-locdshockytkbuser")
     suspend fun getHocKy(@Header("Authorization") authorization: String, @Body filter: FilterRequest): Response<HocKyRespone>
+
+    @POST("sch/w-locdstkbtuanusertheohocky")
+    suspend fun getTKB(@Header("Authorization") authorization: String, @Body filter: FilterRequest) : Response<TKBRespone>
 }

@@ -16,6 +16,7 @@ import com.example.qldt_ptit_android_app_summer_2023.database.QldtHelper
 import com.example.qldt_ptit_android_app_summer_2023.model.FilterRequest
 import com.example.qldt_ptit_android_app_summer_2023.model.HocKy
 import com.example.qldt_ptit_android_app_summer_2023.model.User
+import com.google.gson.Gson
 import kotlinx.coroutines.*
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -162,6 +163,7 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
 
+            var listHocKyRespone: ArrayList<HocKy> = ArrayList()
             var getHocKyJob = launch {
                 loginJob.join()
                 if(user.isInitialized()){
@@ -172,18 +174,47 @@ class LoginActivity : AppCompatActivity() {
                     filter.addAdditional("ordering", arrayOf(ordering))
                     var respone = retrofit.getHocKy("${user.tokenType} ${user.accessToken}", filter)
                     if(respone.code() == 200){
+                        Log.d("headerhk", respone.headers().toString())
                         Log.d("hocky", respone.body().toString())
-                        var lsHocKy = respone.body()!!.listHocKyRespone.listHocKy
-                        for(hocky in lsHocKy){
-                            dbHelper.upsertHocKy(hocky)
-                        }
-                        var checkGetHK: ArrayList<HocKy> = dbHelper.getAllHocKy()
-                        for(hk in checkGetHK){
-                            Log.d("get hk", hk.toString())
-                        }
+                        listHocKyRespone = respone.body()!!.listHocKyRespone.listHocKy
                     }
                 }
             }
+
+            val insertHocKyJob = launch {
+                getHocKyJob.join()
+                if(listHocKyRespone.size > 0){
+                    for(hocky in listHocKyRespone){
+                        dbHelper.upsertHocKy(hocky)
+                    }
+                }
+            }
+
+            val getTKBJob = launch {
+                getHocKyJob.join()
+                if(listHocKyRespone.size > 0){
+                    for(hocky in listHocKyRespone){
+
+                        var filter = FilterRequest()
+                        filter.addFilter("hoc_ky", hocky.id)
+                        filter.addFilter("ten_hoc_ky" , "")
+                        filter.addAdditional("paging", mapOf("limit" to 100, "page" to 1))
+                        var ordering = mapOf<String, Any?>("name" to null, "order_type" to null)
+                        filter.addAdditional("ordering", arrayListOf(ordering))
+                        var respone = retrofit.getTKB("${user.tokenType} ${user.accessToken}", filter)
+                        if(respone.code() == 200){
+                            var lsTiet = respone.body()!!.dataRespone.listTiet
+                            for(tiet in lsTiet){
+                                dbHelper.upsertTiet(tiet)
+                            }
+
+                        }
+
+                    }
+                }
+            }
+
+
         }
     }
 

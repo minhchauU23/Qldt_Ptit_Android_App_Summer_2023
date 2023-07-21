@@ -5,10 +5,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
-import com.example.qldt_ptit_android_app_summer_2023.model.HocKy
-import com.example.qldt_ptit_android_app_summer_2023.model.Post
-import com.example.qldt_ptit_android_app_summer_2023.model.Student
-import com.example.qldt_ptit_android_app_summer_2023.model.User
+import com.example.qldt_ptit_android_app_summer_2023.model.*
 import java.text.SimpleDateFormat
 import kotlin.collections.ArrayList
 
@@ -115,11 +112,107 @@ class QldtHelper: SQLiteOpenHelper{
             " $hockyColumnEndDate DATE" +
             ");"
 
+    val tblTiet = "Tiet"
+    val tietColumnTiet = "tiet"
+    val tietColumnStartTime = "start_time"
+    val tietColumnEndTime = "end_time"
+    val tietColumnHocKyID = "hk_id"
+    val createTableTiet = "CREATE TABLE IF NOT EXISTS $tblTiet(" +
+            " $tietColumnTiet INT," +
+            " $tietColumnStartTime TEXT," +
+            " $tietColumnEndTime TEXT," +
+            " $tietColumnHocKyID INT," +
+            " PRIMARY KEY ($tietColumnTiet, $tietColumnHocKyID)," +
+            " FOREIGN KEY ($tietColumnHocKyID) REFERENCES $tblHocKy($hocKyColumnID)" +
+            ");"
+
+    val tblTuan = "tuan"
+    val tuanColumnTuanHocKy = "tuan_hoc_ky"
+    val tuanColumnMaTuan = "id"
+    val tuanColumnChiTiet = "description"
+    val tuanColumnStartDate = "start_date"
+    val tuanColumnEndDate = "end_date"
+    val tuanColumnHocKyID = "hkid"
+    val creatTableTuan = "CREATE TABLE IF NOT EXISTS $tblTuan(" +
+            " $tuanColumnTuanHocKy INT," +
+            " $tuanColumnMaTuan INT PRIMARY KEY," +
+            " $tuanColumnChiTiet TEXT," +
+            " $tuanColumnStartDate TEXT," +
+            " $tuanColumnEndDate TEXT," +
+            " $tuanColumnHocKyID INT," +
+            " FOREIGN KEY($tuanColumnHocKyID) " +
+            " REFERENCES $tblHocKy($hocKyColumnID)" +
+            ");"
+
+    val tblSubject = "subject"
+    val subjectColumnID = "id"
+    val subjectColumnName = "name"
+    val subjectColumnNumOfCredit = "credits"
+    val createTableSubject = "CREATE TABLE IF NOT EXISTS $tblSubject(" +
+            " $subjectColumnID TEXT PRIMARY KEY," +
+            " $subjectColumnName TEXT," +
+            " $subjectColumnNumOfCredit TEXT" +
+            ");"
+
+    val tblLecturer = "lecturer"
+    val lecturerColumnID = "id"
+    val lecturerColumnName = "name"
+    val createTableLecturer = "CREATE TABLE IF NOT EXISTS $tblLecturer(" +
+            " $lecturerColumnID TEXT PRIMARY KEY," +
+            " $lecturerColumnName TEXT" +
+            ");"
+
+    val tblCreditClass = "credit_class"
+    val creditClasssColumnID = "id"
+    val creditClasssColumnCode = "code"
+    val creditClasssColumnGroup = "group_study"
+    val creditClasssColumnHocKyID = "hkid"
+    val creditClasssColumnSubjectID = "subject_id"
+    val creditClasssColumnLecturerID = "lecture_id"
+    val createTableCreditClasssQldt = "CREATE TABLE IF NOT EXISTS $tblCreditClass(" +
+            " $creditClasssColumnID TEXT PRIMARY KEY," +
+            " $creditClasssColumnCode TEXT," +
+            " $creditClasssColumnGroup TEXT," +
+            " $creditClasssColumnHocKyID INT," +
+            " $creditClasssColumnSubjectID TEXT," +
+            " $creditClasssColumnLecturerID TEXT," +
+            " FOREIGN KEY ($creditClasssColumnHocKyID) " +
+            "   REFERENCES $tblHocKy($hocKyColumnID)," +
+            " FOREIGN KEY ($creditClasssColumnSubjectID)" +
+            "   REFERENCES $tblSubject($subjectColumnID)," +
+            " FOREIGN KEY ($creditClasssColumnLecturerID)" +
+            "   REFERENCES $tblLecturer($lecturerColumnID)" +
+            ");"
+
+    val tblTKB = "tkb"
+    val tkbColumnID = "id"
+    val tkbColumnDate = "date"
+    val tkbColumnClassStart = "class_start"
+    val tkbColumnNumberOfLessons = "num_of_lesson"
+    val tbkColumnRoom = "room"
+    val tbkColumnCreditClassID = "credit_class_id"
+    val createTableTKB = "CREATE TABLE IF NOT EXISTS $tblTKB(" +
+            " $tkbColumnID TEXT PRIMARY KEY," +
+            " $tkbColumnDate INT," +
+            " $tkbColumnClassStart INT," +
+            " $tkbColumnNumberOfLessons INT," +
+            " $tbkColumnRoom TEXT," +
+            " $tbkColumnCreditClassID TEXT," +
+            " FOREIGN KEY ($tbkColumnCreditClassID) " +
+            "    REFERENCES $tblCreditClass($creditClasssColumnID)" +
+            ");"
+
     override fun onCreate(p0: SQLiteDatabase?) {
         p0?.execSQL(createTableUser)
         p0?.execSQL(createTableStudent)
         p0?.execSQL(createTablePost)
         p0?.execSQL(createTableHocKy)
+        p0?.execSQL(createTableTiet)
+        p0?.execSQL(creatTableTuan)
+        p0?.execSQL(createTableSubject)
+        p0?.execSQL(createTableLecturer)
+        p0?.execSQL(createTableCreditClasssQldt)
+        p0?.execSQL(createTableTKB)
     }
 
     override fun onUpgrade(p0: SQLiteDatabase?, p1: Int, p2: Int) {
@@ -270,5 +363,19 @@ class QldtHelper: SQLiteOpenHelper{
                 ))
         }
         return listHocKy
+    }
+
+    fun upsertTiet(tiet: Tiet){
+        var query = "INSERT OR REPLACE INTO $tblTiet VALUES(?, ?, ?, ?);"
+        var sqliteStatement = writableDatabase.compileStatement(query)
+        sqliteStatement.bindLong(1, tiet.tiet.toLong())
+        sqliteStatement.bindString(2, tiet.startTime)
+        if(tiet.endTime == null){
+            tiet.endTime = "";
+        }
+        sqliteStatement.bindString(3, tiet.endTime)
+        sqliteStatement.bindLong(4, tiet.hkid.toLong())
+        sqliteStatement.execute()
+        Log.d("upsert tiet", "upserting tiet")
     }
 }
