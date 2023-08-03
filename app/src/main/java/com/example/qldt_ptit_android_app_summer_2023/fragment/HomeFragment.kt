@@ -14,7 +14,7 @@ import com.example.qldt_ptit_android_app_summer_2023.database.QldtHelper
 import com.example.qldt_ptit_android_app_summer_2023.DetailPostActivity
 import com.example.qldt_ptit_android_app_summer_2023.model.Post
 
-class HomeFragment: Fragment() {
+class HomeFragment(): Fragment() {
     lateinit var rcvHome: RecyclerView
     lateinit var itemHomePostAdapter: ItemHomePostAdapter
     var listPost: ArrayList<Post>? = ArrayList()

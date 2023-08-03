@@ -5,9 +5,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
-import com.example.qldt_ptit_android_app_summer_2023.model.Post
-import com.example.qldt_ptit_android_app_summer_2023.model.Student
-import com.example.qldt_ptit_android_app_summer_2023.model.User
+import com.example.qldt_ptit_android_app_summer_2023.model.*
 import java.text.SimpleDateFormat
 import kotlin.collections.ArrayList
 
@@ -102,10 +100,162 @@ class QldtHelper: SQLiteOpenHelper{
             " $postColumnCorrectingDate TEXT" +
             ");"
 
+    val tblHocKy = "hocky"
+    val hocKyColumnID = "id"
+    val hocKyColumnDes = "des"
+    val hocKyColumnStartDate = "start_date"
+    val hockyColumnEndDate = "end_date"
+    val createTableHocKy = "CREATE TABLE IF NOT EXISTS $tblHocKy (" +
+            " $hocKyColumnID INT PRIMARY KEY," +
+            " $hocKyColumnDes TEXT," +
+            " $hocKyColumnStartDate DATE," +
+            " $hockyColumnEndDate DATE" +
+            ");"
+
+    val tblTiet = "Tiet"
+    val tietColumnTiet = "tiet"
+    val tietColumnStartTime = "start_time"
+    val tietColumnEndTime = "end_time"
+    val tietColumnHocKyID = "hk_id"
+    val createTableTiet = "CREATE TABLE IF NOT EXISTS $tblTiet(" +
+            " $tietColumnTiet INT," +
+            " $tietColumnStartTime TEXT," +
+            " $tietColumnEndTime TEXT," +
+            " $tietColumnHocKyID INT," +
+            " PRIMARY KEY ($tietColumnTiet, $tietColumnHocKyID)," +
+            " FOREIGN KEY ($tietColumnHocKyID) REFERENCES $tblHocKy($hocKyColumnID)" +
+            ");"
+
+    val tblTuan = "tuan"
+    val tuanColumnTuanHocKy = "tuan_hoc_ky"
+    val tuanColumnTuanTuyetDoi = "tuan_tuyet_doi"
+    val tuanColumnChiTiet = "description"
+    val tuanColumnStartDate = "start_date"
+    val tuanColumnEndDate = "end_date"
+    val tuanColumnHocKyID = "hkid"
+    val creatTableTuan = "CREATE TABLE IF NOT EXISTS $tblTuan(" +
+            " $tuanColumnTuanHocKy INT," +
+            " $tuanColumnTuanTuyetDoi INT," +
+            " $tuanColumnChiTiet TEXT," +
+            " $tuanColumnStartDate TEXT," +
+            " $tuanColumnEndDate TEXT," +
+            " $tuanColumnHocKyID INT," +
+            " PRIMARY KEY($tuanColumnTuanHocKy, $tuanColumnHocKyID)," +
+            " FOREIGN KEY($tuanColumnHocKyID) " +
+            " REFERENCES $tblHocKy($hocKyColumnID)" +
+            ");"
+
+    val tblSubject = "subject"
+    val subjectColumnID = "id"
+    val subjectColumnName = "name"
+    val subjectColumnNumOfCredit = "credits"
+    val createTableSubject = "CREATE TABLE IF NOT EXISTS $tblSubject(" +
+            " $subjectColumnID TEXT PRIMARY KEY," +
+            " $subjectColumnName TEXT," +
+            " $subjectColumnNumOfCredit TEXT" +
+            ");"
+
+    val tblLecturer = "lecturer"
+    val lecturerColumnID = "id"
+    val lecturerColumnName = "name"
+    val createTableLecturer = "CREATE TABLE IF NOT EXISTS $tblLecturer(" +
+            " $lecturerColumnID TEXT PRIMARY KEY," +
+            " $lecturerColumnName TEXT" +
+            ");"
+
+    val tblCreditClass = "credit_class"
+    val creditClasssColumnCode = "code"
+    val creditClasssColumnGroup = "group_study"
+    val creditClasssColumnHocKyID = "hkid"
+    val creditClasssColumnSubjectID = "subject_id"
+    val createTableCreditClasssQldt = "CREATE TABLE IF NOT EXISTS $tblCreditClass(" +
+            " $creditClasssColumnCode TEXT PRIMARY KEY," +
+            " $creditClasssColumnGroup TEXT," +
+            " $creditClasssColumnHocKyID INT," +
+            " $creditClasssColumnSubjectID TEXT," +
+            " FOREIGN KEY ($creditClasssColumnHocKyID) " +
+            "   REFERENCES $tblHocKy($hocKyColumnID)," +
+            " FOREIGN KEY ($creditClasssColumnSubjectID)" +
+            "   REFERENCES $tblSubject($subjectColumnID)" +
+            ");"
+
+    val tblStudentCreditClass = "student_class"
+    val studentCreditClassColumnStudentID = "mssv"
+    val studentCreditClassColumnCreditClassID = "credit_class_id"
+    val createTableStudentCreditClass = "CREATE TABLE IF NOT EXISTS $tblStudentCreditClass(" +
+            " $studentCreditClassColumnStudentID TEXT," +
+            " $studentCreditClassColumnCreditClassID TEXT," +
+            " PRIMARY KEY($studentCreditClassColumnStudentID, $studentCreditClassColumnCreditClassID), " +
+            " FOREIGN KEY ($studentCreditClassColumnStudentID) " +
+            "    REFERENCES $tblStudent($studentColumnStudentCode)," +
+            " FOREIGN KEY ($studentCreditClassColumnCreditClassID) " +
+            "    REFERENCES $tblCreditClass($creditClasssColumnCode)" +
+            ");"
+
+    val tblTKB = "tkb"
+    val tkbColumnID = "id"
+    val tkbColumnDate = "date"
+    val tkbColumnClassStart = "class_start"
+    val tkbColumnNumberOfLessons = "num_of_lesson"
+    val tkbColumnWeekID = "week_id"
+    val tkbColumnHocKyID = "hkid"
+    val createTableTKB = "CREATE TABLE IF NOT EXISTS $tblTKB(" +
+            " $tkbColumnID TEXT ," +
+            " $tkbColumnDate INT," +
+            " $tkbColumnClassStart INT," +
+            " $tkbColumnNumberOfLessons INT," +
+            " $tkbColumnHocKyID INT," +
+            " $tkbColumnWeekID INT," +
+            " PRIMARY KEY ($tkbColumnID, $tkbColumnWeekID)," +
+            " FOREIGN KEY ($tkbColumnWeekID)" +
+            "   REFERENCES $tblTuan($tuanColumnTuanTuyetDoi)," +
+            " FOREIGN KEY ($tkbColumnClassStart, $tkbColumnHocKyID) " +
+            "   REFERENCES $tblTiet($tietColumnTiet, $tietColumnHocKyID)" +
+            ");"
+
+
+    val tblToHoc = "to_hoc"
+    val toHocColumnID = "id"
+    val toHocColumnCreditClass = "credit_class_id"
+    val toHocColumnRoom = "room"
+    val toHocColumnLecturerID = "lecture_id"
+    val createTableToHoc = "CREATE TABLE IF NOT EXISTS $tblToHoc(" +
+            " $toHocColumnID TEXT PRIMARY KEY," +
+            " $toHocColumnCreditClass TEXT," +
+            " $toHocColumnRoom TEXT," +
+            " $toHocColumnLecturerID TEXT," +
+            " FOREIGN KEY ($toHocColumnLecturerID)" +
+            "   REFERENCES $tblLecturer($lecturerColumnID)" +
+            ");"
+
+    val tblToHocTKB = "tkb_to_hoc"
+    val toHocTKBColumnToHocID = "to_hoc_id"
+    val toHocTKBColumnTKBID = "tkb_id"
+    val createTableToHocTKB = "CREATE TABLE IF NOT EXISTS $tblToHocTKB (" +
+            " $toHocTKBColumnToHocID TEXT," +
+            " $toHocTKBColumnTKBID TEXT," +
+            " PRIMARY KEY ($toHocTKBColumnToHocID, $toHocTKBColumnTKBID)," +
+            " FOREIGN KEY ($toHocTKBColumnToHocID)" +
+            "   REFERENCES $tblToHoc($toHocColumnID)," +
+            " FOREIGN KEY ($toHocTKBColumnTKBID)" +
+            "   REFERENCES $tblTKB($tkbColumnID)" +
+            ");"
+
+
     override fun onCreate(p0: SQLiteDatabase?) {
         p0?.execSQL(createTableUser)
         p0?.execSQL(createTableStudent)
         p0?.execSQL(createTablePost)
+        p0?.execSQL(createTableHocKy)
+        p0?.execSQL(createTableTiet)
+        p0?.execSQL(creatTableTuan)
+        p0?.execSQL(createTableSubject)
+        p0?.execSQL(createTableLecturer)
+        p0?.execSQL(createTableCreditClasssQldt)
+        p0?.execSQL(createTableTKB)
+        p0?.execSQL(createTableToHoc)
+        p0?.execSQL(createTableToHocTKB)
+        p0?.execSQL(createTableStudentCreditClass)
     }
 
     override fun onUpgrade(p0: SQLiteDatabase?, p1: Int, p2: Int) {
@@ -132,7 +282,6 @@ class QldtHelper: SQLiteOpenHelper{
     }
 
     fun insertStudent(student: Student){
-//        var query = "INSERT OR REPLACE INTO $tblStudent VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);"
         var contentValue = ContentValues()
         contentValue.put(studentColumnStudentCode, student.username.uppercase())
         contentValue.put(studentColumnGender, student.gender)
@@ -154,7 +303,6 @@ class QldtHelper: SQLiteOpenHelper{
         contentValue.put(studentColumnInCode, student.inCode)
         contentValue.put(studentColumnOutCode, student.outCode)
         writableDatabase.insert(tblStudent,null, contentValue)
-        Log.d("insert student", "inserting student with email = ${student.email}")
 
     }
 
@@ -182,7 +330,6 @@ class QldtHelper: SQLiteOpenHelper{
         sqliteStatement.bindLong(18, student.inCode!!.toLong())
         sqliteStatement.bindLong(19, student.outCode!!.toLong())
         sqliteStatement.execute()
-        Log.d("upsert student", "inserting student with email = ${student.email}")
     }
 
     fun getStudent(user: User): Student?{
@@ -226,7 +373,6 @@ class QldtHelper: SQLiteOpenHelper{
         sqlStatment.bindString(4, post.postingDate)
         sqlStatment.bindString(5, post.correctionDate)
         sqlStatment.execute()
-        Log.d("upsert post", "upserting post with title = ${post.title}")
     }
 
     fun getPosts(): ArrayList<Post>?{
@@ -238,5 +384,200 @@ class QldtHelper: SQLiteOpenHelper{
         }
         return listPosts
     }
+
+    fun upsertHocKy(hocky: HocKy){
+        val query = "INSERT OR REPLACE INTO $tblHocKy VALUES(${hocky.id}, '${hocky.description}', '${SimpleDateFormat("yyyy-MM-dd").format(hocky.getStartDate())}', '${SimpleDateFormat("yyyy-MM-dd").format(hocky.getEndDate())}');"
+        writableDatabase.execSQL(query)
+    }
+
+    fun getHocKyByID(id : String): HocKy?{
+        val query = "SELECT * FROM $tblHocKy WHERE $hocKyColumnID = ?;"
+        val cursor = writableDatabase.rawQuery(query, arrayOf(id))
+        if(cursor.count > 0){
+            return HocKy(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getString(3))
+        }
+        return null
+    }
+
+    fun getAllHocKy(): ArrayList<HocKy>{
+        val query = "SELECT * FROM $tblHocKy order by $hockyColumnEndDate desc;"
+        var cursor = writableDatabase.rawQuery(query, null)
+        var listHocKy = arrayListOf<HocKy>()
+        while (cursor.moveToNext()){
+            listHocKy.add(HocKy(cursor.getInt(0), cursor.getString(1),
+                SimpleDateFormat("dd/MM/yyyy").format(SimpleDateFormat("yyyy-MM-dd").parse( cursor.getString(2))),
+                SimpleDateFormat("dd/MM/yyyy").format(SimpleDateFormat("yyyy-MM-dd").parse( cursor.getString(3)))
+                ))
+        }
+        return listHocKy
+    }
+
+    fun upsertTiet(tiet: Tiet){
+        var query = "INSERT OR REPLACE INTO $tblTiet VALUES(?, ?, ?, ?);"
+        var sqliteStatement = writableDatabase.compileStatement(query)
+        sqliteStatement.bindLong(1, tiet.tiet!!.toLong())
+        sqliteStatement.bindString(2, tiet.startTime)
+        if(tiet.endTime == null){
+            tiet.endTime = "";
+        }
+        sqliteStatement.bindString(3, tiet.endTime)
+        sqliteStatement.bindLong(4, tiet.hkid!!.toLong())
+        sqliteStatement.execute()
+    }
+
+    fun upsertTuan(tuan: Tuan){
+        var query = "INSERT OR REPLACE INTO $tblTuan VALUES(?, ?, ?, ?, ?, ?);"
+        var sqliteStatement  = writableDatabase.compileStatement(query)
+        sqliteStatement.bindLong(1, tuan.tuanHocKy.toLong())
+        sqliteStatement.bindLong(2, tuan.tuanTuyetDoi.toLong())
+        sqliteStatement.bindString(3, tuan.description)
+        sqliteStatement.bindString(4, tuan.startDate)
+        sqliteStatement.bindString(5, tuan.endDate)
+        sqliteStatement.bindLong(6, tuan.hocKy.id.toLong())
+        sqliteStatement.execute()
+    }
+
+    fun getTuanByHocKy(hocky: HocKy): ArrayList<Tuan>{
+        var query = "SELECT * FROM $tblTuan WHERE $tuanColumnHocKyID = ?;"
+        var cursor = writableDatabase.rawQuery(query, arrayOf(hocky.id.toString()) )
+        var listWeeks = arrayListOf<Tuan>()
+        while (cursor.moveToNext()){
+            listWeeks.add(Tuan(cursor.getInt(0), cursor.getInt(1), cursor.getString(2),
+                cursor.getString(3), cursor.getString(4), hocky))
+        }
+        return listWeeks
+    }
+
+    fun upsertSubject(subject: Subject){
+        val query = "INSERT OR REPLACE INTO $tblSubject VALUES(?, ?, ?);"
+        val sqlStatement = writableDatabase.compileStatement(query)
+        sqlStatement.bindString(1, subject.subId)
+        sqlStatement.bindString(2, subject.name)
+        sqlStatement.bindString(3, subject.numOfCredit.toString())
+        sqlStatement.execute()
+    }
+
+    fun getSubjectByID(id: String): Subject?{
+        var query = "SELECT * FROM $tblSubject WHERE id = ?;"
+        var cursor = writableDatabase.rawQuery(query, arrayOf(id))
+        if(cursor.count > 0){
+            return Subject(cursor.getString(0), cursor.getString(1), cursor.getInt(2))
+        }
+        return null
+    }
+
+    fun upsertLecturer(lecturer: Lecturer){
+        val query = "INSERT OR REPLACE INTO $tblLecturer VALUES(?,?);"
+        val sqlStatement = writableDatabase.compileStatement(query)
+        sqlStatement.bindString(1, lecturer.lecturerCode)
+        sqlStatement.bindString(2, lecturer.name)
+        sqlStatement.execute()
+    }
+
+    fun getLecturerById(id: String): Lecturer?{
+        var query = "SELECT * FROM $tblLecturer WHERE id = ?;"
+        var cursor = writableDatabase.rawQuery(query, arrayOf(id))
+        if(cursor.count > 0){
+            return Lecturer(cursor.getString(0), cursor.getString(1))
+        }
+        return null
+    }
+
+
+    fun upsertCreditClass(creditClass: CreditClass){
+        var query = "INSERT OR REPLACE INTO $tblCreditClass VALUES(?, ?, ?, ?);"
+        var sqlStatement = writableDatabase.compileStatement(query)
+        sqlStatement.bindString(1, creditClass.code)
+        sqlStatement.bindString(2, creditClass.group.toString())
+        sqlStatement.bindLong(3, creditClass.hocKy.id.toLong())
+        sqlStatement.bindString(4, creditClass.subject.subId)
+        sqlStatement.execute()
+    }
+
+    fun getCreditClassByStudentID(studentID: String): CreditClass?{
+        var query = "SELECT " +
+                "(SELECT $studentCreditClassColumnCreditClassID FROM $tblStudentCreditClass b " +
+                "   WHERE b.$studentCreditClassColumnCreditClassID = a.$creditClasssColumnCode" +
+                "   AND b.$studentCreditClassColumnStudentID = ?) as id, " +
+                " $creditClasssColumnGroup as $creditClasssColumnGroup," +
+                " a.$creditClasssColumnHocKyID as $creditClasssColumnHocKyID, a.$creditClasssColumnSubjectID as $creditClasssColumnSubjectID" +
+                " FROM $tblCreditClass a;"
+        var cursor = writableDatabase.rawQuery(query, arrayOf(studentID))
+        if (cursor.count > 0){
+            var hocky = getHocKyByID(cursor.getString(2))
+            var subject = getSubjectByID(cursor.getString(3))
+            var creditClass = CreditClass(cursor.getString(0), cursor.getString(1).toInt(), hocky!!, subject!!)
+            return creditClass
+        }
+        return null
+    }
+
+    fun upsertToHoc(tohoc: ToHoc){
+        var query = "INSERT OR REPLACE INTO $tblToHoc VALUES(?, ?, ?, ?);"
+        var sqlStatement = writableDatabase.compileStatement(query)
+
+        sqlStatement.bindString(1, tohoc.id)
+        sqlStatement.bindString(2, tohoc.creditClass?.code)
+        sqlStatement.bindString(3, tohoc.room)
+        sqlStatement.bindString(4, tohoc.lecturer?.lecturerCode)
+        sqlStatement.execute()
+    }
+
+    fun upsertStudentCreditClass(creditClass: CreditClass, student: User){
+        var query = "INSERT OR REPLACE INTO $tblStudentCreditClass VALUES(UPPER(?), ?);"
+        var sqlStatement = writableDatabase.compileStatement(query)
+        sqlStatement.bindString(1, student.username)
+        sqlStatement.bindString(2, creditClass.code)
+        sqlStatement.execute()
+    }
+    fun upsertTKB(tkb: ThoiKhoaBieu){
+        var query = "INSERT OR REPLACE INTO $tblTKB VALUES(?, ?, ?, ?, ?, ?);"
+        var sqlStatement = writableDatabase.compileStatement(query)
+        sqlStatement.bindString(1, tkb.id)
+        sqlStatement.bindLong(2, tkb.date.toLong())
+        sqlStatement.bindLong(3, tkb.startClass.tiet!!.toLong())
+        sqlStatement.bindLong(4, tkb.numOfLesson.toLong())
+        sqlStatement.bindLong(5, tkb.tuan.hocKy.id.toLong() )
+        sqlStatement.bindLong(6, tkb.tuan.tuanTuyetDoi.toLong())
+        sqlStatement.execute()
+    }
+
+    fun getTKB(student: Student, tuan: Tuan, thu: Int): ArrayList<ToHoc>{
+        var dataset = ArrayList<ToHoc>()
+        var query = "SELECT b.$creditClasssColumnCode, b.$creditClasssColumnGroup, c.$subjectColumnID, c.$subjectColumnName, c.$subjectColumnNumOfCredit, d.$toHocColumnRoom, e.$lecturerColumnID, e.$lecturerColumnName, f.$tkbColumnID, f.$tkbColumnDate, f.$tkbColumnNumberOfLessons, g.$tietColumnTiet, g.$tietColumnStartTime, g.$tietColumnEndTime  " +
+                "   FROM  $tblStudentCreditClass a INNER JOIN $tblCreditClass b INNER JOIN $tblSubject c INNER JOIN $tblToHoc d INNER JOIN  $tblLecturer e INNER JOIN $tblToHocTKB dtof INNER JOIN $tblTKB f INNER JOIN $tblTiet g" +
+                "   ON UPPER(a.$studentCreditClassColumnStudentID) = UPPER('${student.username}') AND a.$studentCreditClassColumnCreditClassID = b.$creditClasssColumnCode" +
+                "       AND b.$creditClasssColumnSubjectID = c.$subjectColumnID AND d.$toHocColumnCreditClass = b.$creditClasssColumnCode " +
+                "       AND e.$lecturerColumnID = d.$toHocColumnLecturerID AND  d.$toHocColumnID = dtof.$toHocTKBColumnToHocID AND dtof.$toHocTKBColumnTKBID = f.$tkbColumnID AND f.$tkbColumnWeekID = ${tuan.tuanTuyetDoi} AND f.$tkbColumnDate = $thu AND f.$tkbColumnClassStart = g.$tietColumnTiet AND g.$tietColumnHocKyID = ${tuan.hocKy.id} ORDER BY g.$tietColumnTiet; "
+        var cursor = readableDatabase.rawQuery(query, null)
+        while (cursor.moveToNext()){
+            var subject = Subject(cursor.getString(2), cursor.getString(3), cursor.getInt(4))
+            var creditClass = CreditClass(cursor.getString(0), cursor.getInt(1), tuan.hocKy, subject)
+            var lecturer = Lecturer(cursor.getString(6), cursor.getString(7))
+            var toHoc = ToHoc()
+            toHoc.room = cursor.getString(5)
+            toHoc.creditClass = creditClass
+            toHoc.lecturer = lecturer
+            var tiet = Tiet()
+            tiet.tiet = cursor.getInt(11)
+            tiet.startTime = cursor.getString(12)
+            tiet.endTime = cursor.getString(13)
+            Log.d("tiet", tiet.tiet.toString())
+            var tkb = ThoiKhoaBieu(cursor.getString(8), cursor.getInt(9), tiet,cursor.getInt(10), tuan )
+            toHoc.tkb = tkb
+            dataset.add(toHoc)
+        }
+        return dataset
+    }
+
+    fun upsertToHocTKB(tohoc: ToHoc, tkb: ThoiKhoaBieu){
+        var query = "INSERT OR REPLACE INTO $tblToHocTKB VALUES(?, ?);"
+        var sqlStatement = writableDatabase.compileStatement(query)
+        sqlStatement.bindString(1, tohoc.id)
+        sqlStatement.bindString(2, tkb.id)
+        Log.d("upserting tohoc tkb", "${tohoc.id} ${tkb.id}")
+        sqlStatement.execute()
+    }
+
 
 }
