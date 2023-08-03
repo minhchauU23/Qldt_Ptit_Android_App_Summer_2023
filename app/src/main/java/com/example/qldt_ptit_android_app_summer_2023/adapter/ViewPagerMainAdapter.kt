@@ -9,7 +9,7 @@ import com.example.qldt_ptit_android_app_summer_2023.model.Student
 
 class ViewPagerMainAdapter(fragmentManager: FragmentManager,var student: Student ): FragmentStatePagerAdapter(fragmentManager) {
     override fun getCount(): Int {
-        return 2
+        return 3
     }
 
     override fun getItem(position: Int): Fragment {
