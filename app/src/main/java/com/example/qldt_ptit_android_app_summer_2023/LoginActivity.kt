@@ -13,13 +13,8 @@ import android.widget.EditText
 import android.widget.Toast
 import com.example.qldt_ptit_android_app_summer_2023.api.QldtService
 import com.example.qldt_ptit_android_app_summer_2023.database.QldtHelper
-import com.example.qldt_ptit_android_app_summer_2023.model.FilterRequest
-import com.example.qldt_ptit_android_app_summer_2023.model.HocKy
-import com.example.qldt_ptit_android_app_summer_2023.model.User
-import com.google.gson.Gson
+import com.example.qldt_ptit_android_app_summer_2023.model.*
 import kotlinx.coroutines.*
-import retrofit2.Response
-import retrofit2.Retrofit
 
 class LoginActivity : AppCompatActivity() {
     lateinit var edtUsername: EditText
@@ -131,38 +126,6 @@ class LoginActivity : AppCompatActivity() {
 
             }
 
-            var switchJob = launch {
-                loginJob.join()
-                if(user.isInitialized()){
-                    var intent = Intent(applicationContext, MainActivity::class.java)
-                    startActivity(intent)
-                    finish()
-                }
-
-            }
-
-            var getInforJob = launch {
-                loginJob.join()
-                if(user.isInitialized()){
-                    when(user.roles){
-                        "SINHVIEN"->{
-                            var respone = retrofit.getInfor("${user.tokenType} ${user.accessToken}")
-                            var body = respone.body()
-                            if(respone.code() == 200){
-                                var student = body?.data
-                                student?.username = user.username
-                                student?.password = user.password
-                                student?.fullName = user.fullName
-                                student?.roles = user.roles
-                                student?.accessToken = user.accessToken
-                                student?.tokenType = user.tokenType
-                                dbHelper.upsertStudent(student!!)
-                            }
-                        }
-                    }
-                }
-            }
-
             var listHocKyRespone: ArrayList<HocKy> = ArrayList()
             var getHocKyJob = launch {
                 loginJob.join()
@@ -174,8 +137,6 @@ class LoginActivity : AppCompatActivity() {
                     filter.addAdditional("ordering", arrayOf(ordering))
                     var respone = retrofit.getHocKy("${user.tokenType} ${user.accessToken}", filter)
                     if(respone.code() == 200){
-                        Log.d("headerhk", respone.headers().toString())
-                        Log.d("hocky", respone.body().toString())
                         listHocKyRespone = respone.body()!!.listHocKyRespone.listHocKy
                     }
                 }
@@ -194,7 +155,6 @@ class LoginActivity : AppCompatActivity() {
                 getHocKyJob.join()
                 if(listHocKyRespone.size > 0){
                     for(hocky in listHocKyRespone){
-
                         var filter = FilterRequest()
                         filter.addFilter("hoc_ky", hocky.id)
                         filter.addFilter("ten_hoc_ky" , "")
@@ -207,14 +167,74 @@ class LoginActivity : AppCompatActivity() {
                             for(tiet in lsTiet){
                                 dbHelper.upsertTiet(tiet)
                             }
-
+                            var lsTuan = respone.body()!!.dataRespone.listTuan
+                            for(tuanRaws in lsTuan){
+                                var lsRawTKB = tuanRaws.listTkb
+                                var tuan = Tuan(tuanRaws.tuanHocKy, tuanRaws.tuanTuyetDoi, tuanRaws.description, tuanRaws.startDate, tuanRaws.endDate, hocky)
+                                val insertTuanJob =launch { dbHelper.upsertTuan(tuan) }
+                                launch {
+                                    insertTuanJob.join()
+                                    for(tkb in lsRawTKB){
+                                        var subjectRaw = Subject(tkb.maMon, tkb.tenMon, tkb.sotc.toInt())
+                                        val upsertSubjectJob = launch { dbHelper.upsertSubject(subjectRaw) }
+                                        var lecturerRaw = Lecturer(tkb.maGiangVien, tkb.tenGiangVien)
+                                        val upsertLecturerJob = launch { dbHelper.upsertLecturer(lecturerRaw) }
+                                        var creditClass = CreditClass(tkb.maLop, tkb.maNhom.toInt(), hocky, subjectRaw)
+                                        val upsertCreditClass = launch {
+                                            upsertSubjectJob.join()
+                                            upsertLecturerJob.join()
+                                            dbHelper.upsertCreditClass(creditClass)
+                                            dbHelper.upsertStudentCreditClass(creditClass, user)
+                                        }
+                                        var tiet = Tiet()
+                                        tiet.tiet = tkb.tietBD
+                                        tiet.hkid = hocky.id
+                                        var tkbRaw = ThoiKhoaBieu(tkb.idTKB, tkb.thu, tiet, tkb.soTiet!!, tuan)
+                                        val upsertTKBJOB = launch {
+                                            dbHelper.upsertTKB(tkbRaw)
+                                        }
+                                        var toHoc = ToHoc()
+                                        toHoc.id = tkb.idToHoc.trim()
+                                        toHoc.creditClass = creditClass
+                                        toHoc.lecturer = lecturerRaw
+                                        toHoc.room = tkb.maPhong
+                                        toHoc.tkb = tkbRaw
+                                        val upsertToHoc = launch {
+                                            upsertTKBJOB.join()
+                                            dbHelper.upsertToHoc(toHoc)
+                                            dbHelper.upsertToHocTKB(toHoc, tkbRaw)
+                                        }
+                                    }
+                                }
+                            }
                         }
-
                     }
                 }
             }
-
-
+            var getInforJob = launch {
+                loginJob.join()
+                if(user.isInitialized()){
+                    when(user.roles){
+                        "SINHVIEN"->{
+                            var respone = retrofit.getInfor("${user.tokenType} ${user.accessToken}")
+                            var body = respone.body()
+                            if(respone.code() == 200){
+                                var student = body?.data
+                                student?.username = user.username
+                                student?.password = user.password
+                                student?.fullName = user.fullName
+                                student?.roles = user.roles
+                                student?.accessToken = user.accessToken
+                                student?.tokenType = user.tokenType
+                                dbHelper.upsertStudent(student!!)
+                                var intent = Intent(applicationContext, MainActivity::class.java)
+                                intent.putExtra("student", student)
+                                startActivity(intent)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

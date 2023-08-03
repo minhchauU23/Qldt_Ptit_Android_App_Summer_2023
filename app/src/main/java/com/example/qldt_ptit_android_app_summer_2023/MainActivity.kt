@@ -2,12 +2,9 @@ package com.example.qldt_ptit_android_app_summer_2023
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.viewpager.widget.ViewPager
-import androidx.viewpager2.adapter.FragmentStateAdapter
-import androidx.viewpager2.widget.ViewPager2
 import com.example.qldt_ptit_android_app_summer_2023.adapter.ViewPagerMainAdapter
+import com.example.qldt_ptit_android_app_summer_2023.model.Student
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
@@ -19,7 +16,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         bottomNavBar = findViewById(R.id.bottom_nav_bar)
         viewPager = findViewById(R.id.view_pager_main)
-        viewPagerAdapter = ViewPagerMainAdapter(supportFragmentManager)
+        var student = intent.getSerializableExtra("student")
+        viewPagerAdapter = ViewPagerMainAdapter(supportFragmentManager, student as Student)
         viewPager.adapter = viewPagerAdapter
+
     }
 }

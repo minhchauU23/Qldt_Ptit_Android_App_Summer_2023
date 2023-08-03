@@ -8,4 +8,7 @@
     <string name="mDiem">Điểm</string>
     <string name="mLichThi">Lịch thi</string>
     <string name="mInfor">Cá nhân</string>
+    <string name="lectureName">Tên giảng viên:</string>
+    <string name="studyRoom">Phòng học:</string>
+    <string name="timeStudy">Giờ học:</string>
 </resources>

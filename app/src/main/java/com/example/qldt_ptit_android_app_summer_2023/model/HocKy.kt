@@ -22,4 +22,8 @@ data class HocKy(
     fun getEndDate(): Date{
         return SimpleDateFormat("dd/MM/yyyy").parse(endDate)
     }
+
+    override fun toString(): String {
+        return description
+    }
 }
