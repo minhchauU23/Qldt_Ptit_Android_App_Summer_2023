@@ -175,17 +175,18 @@ class LoginActivity : AppCompatActivity() {
                                 launch {
                                     insertTuanJob.join()
                                     for(tkb in lsRawTKB){
-                                        var subjectRaw = Subject(tkb.maMon, tkb.tenMon, tkb.sotc.toInt())
+                                        var subjectRaw = Subject(tkb.maMon, tkb.tenMon, tkb.sotc.toFloat())
                                         val upsertSubjectJob = launch { dbHelper.upsertSubject(subjectRaw) }
                                         var lecturerRaw = Lecturer(tkb.maGiangVien, tkb.tenGiangVien)
                                         val upsertLecturerJob = launch { dbHelper.upsertLecturer(lecturerRaw) }
-                                        var creditClass = CreditClass(tkb.maLop, tkb.maNhom.toInt(), hocky, subjectRaw)
+                                        var creditClass = CreditClass(tkb.maLop, tkb.maNhom, hocky, subjectRaw)
                                         val upsertCreditClass = launch {
                                             upsertSubjectJob.join()
                                             upsertLecturerJob.join()
                                             dbHelper.upsertCreditClass(creditClass)
-                                            dbHelper.upsertStudentCreditClass(creditClass, user)
+                                            dbHelper.insertScore(creditClass, user)
                                         }
+
                                         var tiet = Tiet()
                                         tiet.tiet = tkb.tietBD
                                         tiet.hkid = hocky.id
@@ -193,14 +194,15 @@ class LoginActivity : AppCompatActivity() {
                                         val upsertTKBJOB = launch {
                                             dbHelper.upsertTKB(tkbRaw)
                                         }
-                                        var toHoc = ToHoc()
-                                        toHoc.id = tkb.idToHoc.trim()
-                                        toHoc.creditClass = creditClass
-                                        toHoc.lecturer = lecturerRaw
-                                        toHoc.room = tkb.maPhong
-                                        toHoc.tkb = tkbRaw
+
                                         val upsertToHoc = launch {
                                             upsertTKBJOB.join()
+                                            var toHoc = ToHoc()
+                                            toHoc.id = tkb.idToHoc.trim()
+                                            toHoc.creditClass = creditClass
+                                            toHoc.lecturer = lecturerRaw
+                                            toHoc.room = tkb.maPhong
+                                            toHoc.tkb = tkbRaw
                                             dbHelper.upsertToHoc(toHoc)
                                             dbHelper.upsertToHocTKB(toHoc, tkbRaw)
                                         }
@@ -211,8 +213,35 @@ class LoginActivity : AppCompatActivity() {
                     }
                 }
             }
+
+            val getScoreJob = launch {
+                getTKBJob.join()
+//                delay(10000)
+                var respone = retrofit.getScores("${user.tokenType} ${user.accessToken}")
+                Log.d("score job", respone.message())
+                if(respone.code() == 200){
+                    var listRaw = respone.body()!!.data.listScore
+                    Log.d("respone score", respone.body().toString())
+                    for(raw in listRaw){
+                        var hocKyID = raw.hocKy
+                        for(scoreRaw in raw.listScore){
+                            if(!scoreRaw.examScore.equals("")){
+                                var creid = dbHelper.getCreditClassID(hocKyID.toInt(), scoreRaw.subID, scoreRaw.group)
+                                if(!creid.equals(""))
+                                    launch {
+                                        Log.d("creid", "$creid ${scoreRaw.subID} ${scoreRaw.subName}")
+                                        dbHelper.updateScore(user.username, creid,scoreRaw.subID ,Score(scoreRaw.examScore.toFloat(), scoreRaw.midtermScore.toFloat(), scoreRaw.finalScore.toFloat(), scoreRaw.finalScoreNum.toFloat(), scoreRaw.finalScoreChar))
+                                    }
+                            }
+                        }
+                    }
+                }
+            }
+
             var getInforJob = launch {
                 loginJob.join()
+//                dbHelper.testGet()
+//                delay(5000)
                 if(user.isInitialized()){
                     when(user.roles){
                         "SINHVIEN"->{

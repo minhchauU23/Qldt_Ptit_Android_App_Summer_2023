@@ -169,27 +169,40 @@ class QldtHelper: SQLiteOpenHelper{
     val creditClasssColumnHocKyID = "hkid"
     val creditClasssColumnSubjectID = "subject_id"
     val createTableCreditClasssQldt = "CREATE TABLE IF NOT EXISTS $tblCreditClass(" +
-            " $creditClasssColumnCode TEXT PRIMARY KEY," +
+            " $creditClasssColumnCode TEXT ," +
             " $creditClasssColumnGroup TEXT," +
             " $creditClasssColumnHocKyID INT," +
             " $creditClasssColumnSubjectID TEXT," +
+            " PRIMARY KEY ($creditClasssColumnCode, $creditClasssColumnSubjectID)," +
             " FOREIGN KEY ($creditClasssColumnHocKyID) " +
             "   REFERENCES $tblHocKy($hocKyColumnID)," +
             " FOREIGN KEY ($creditClasssColumnSubjectID)" +
             "   REFERENCES $tblSubject($subjectColumnID)" +
             ");"
 
-    val tblStudentCreditClass = "student_class"
-    val studentCreditClassColumnStudentID = "mssv"
-    val studentCreditClassColumnCreditClassID = "credit_class_id"
-    val createTableStudentCreditClass = "CREATE TABLE IF NOT EXISTS $tblStudentCreditClass(" +
-            " $studentCreditClassColumnStudentID TEXT," +
-            " $studentCreditClassColumnCreditClassID TEXT," +
-            " PRIMARY KEY($studentCreditClassColumnStudentID, $studentCreditClassColumnCreditClassID), " +
-            " FOREIGN KEY ($studentCreditClassColumnStudentID) " +
+    val tblScore = "student_class"
+    val scoreColumnStudentID = "mssv"
+    val scoreColumnCreditClassID = "credit_class_id"
+    val scoreColumnSubjectID = "subject_id"
+    val scoreColumnExamScore = "exam"
+    val scoreColumnMidtermScore = "midterm"
+    val scoreColumnFinalScore = "final"
+    val scoreColumnFinalScoreNum = "final4th"
+    val scoreColumnFinalScoreChar = "final_char"
+    val createTableScore = "CREATE TABLE IF NOT EXISTS $tblScore(" +
+            " $scoreColumnStudentID TEXT," +
+            " $scoreColumnCreditClassID TEXT," +
+            " $scoreColumnSubjectID TEXT," +
+            " $scoreColumnExamScore REAL," +
+            " $scoreColumnMidtermScore REAL," +
+            " $scoreColumnFinalScore REAL," +
+            " $scoreColumnFinalScoreNum REAL," +
+            " $scoreColumnFinalScoreChar TEXT," +
+            " PRIMARY KEY($scoreColumnStudentID, $scoreColumnCreditClassID, $scoreColumnSubjectID), " +
+            " FOREIGN KEY ($scoreColumnStudentID) " +
             "    REFERENCES $tblStudent($studentColumnStudentCode)," +
-            " FOREIGN KEY ($studentCreditClassColumnCreditClassID) " +
-            "    REFERENCES $tblCreditClass($creditClasssColumnCode)" +
+            " FOREIGN KEY ($scoreColumnCreditClassID, $scoreColumnSubjectID) " +
+            "    REFERENCES $tblCreditClass($creditClasssColumnCode, $creditClasssColumnSubjectID)" +
             ");"
 
     val tblTKB = "tkb"
@@ -255,7 +268,7 @@ class QldtHelper: SQLiteOpenHelper{
         p0?.execSQL(createTableTKB)
         p0?.execSQL(createTableToHoc)
         p0?.execSQL(createTableToHocTKB)
-        p0?.execSQL(createTableStudentCreditClass)
+        p0?.execSQL(createTableScore)
     }
 
     override fun onUpgrade(p0: SQLiteDatabase?, p1: Int, p2: Int) {
@@ -390,10 +403,11 @@ class QldtHelper: SQLiteOpenHelper{
         writableDatabase.execSQL(query)
     }
 
-    fun getHocKyByID(id : String): HocKy?{
-        val query = "SELECT * FROM $tblHocKy WHERE $hocKyColumnID = ?;"
-        val cursor = writableDatabase.rawQuery(query, arrayOf(id))
+    fun getHocKyByID(id : Int): HocKy?{
+        val query = "SELECT * FROM $tblHocKy WHERE $hocKyColumnID = $id;"
+        var cursor = writableDatabase.rawQuery(query, null)
         if(cursor.count > 0){
+            cursor.moveToFirst()
             return HocKy(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getString(3))
         }
         return null
@@ -438,7 +452,7 @@ class QldtHelper: SQLiteOpenHelper{
     }
 
     fun getTuanByHocKy(hocky: HocKy): ArrayList<Tuan>{
-        var query = "SELECT * FROM $tblTuan WHERE $tuanColumnHocKyID = ?;"
+        var query = "SELECT * FROM $tblTuan WHERE $tuanColumnHocKyID = ? ORDER BY $tuanColumnTuanTuyetDoi;"
         var cursor = writableDatabase.rawQuery(query, arrayOf(hocky.id.toString()) )
         var listWeeks = arrayListOf<Tuan>()
         while (cursor.moveToNext()){
@@ -450,6 +464,7 @@ class QldtHelper: SQLiteOpenHelper{
 
     fun upsertSubject(subject: Subject){
         val query = "INSERT OR REPLACE INTO $tblSubject VALUES(?, ?, ?);"
+        Log.d("sub", subject.subId + " " + subject.name)
         val sqlStatement = writableDatabase.compileStatement(query)
         sqlStatement.bindString(1, subject.subId)
         sqlStatement.bindString(2, subject.name)
@@ -461,7 +476,7 @@ class QldtHelper: SQLiteOpenHelper{
         var query = "SELECT * FROM $tblSubject WHERE id = ?;"
         var cursor = writableDatabase.rawQuery(query, arrayOf(id))
         if(cursor.count > 0){
-            return Subject(cursor.getString(0), cursor.getString(1), cursor.getInt(2))
+            return Subject(cursor.getString(0), cursor.getString(1), cursor.getFloat(2))
         }
         return null
     }
@@ -486,30 +501,50 @@ class QldtHelper: SQLiteOpenHelper{
 
     fun upsertCreditClass(creditClass: CreditClass){
         var query = "INSERT OR REPLACE INTO $tblCreditClass VALUES(?, ?, ?, ?);"
+        Log.d("cred", "${creditClass.code}  ${creditClass.subject.subId}  ${creditClass.subject.name}")
         var sqlStatement = writableDatabase.compileStatement(query)
         sqlStatement.bindString(1, creditClass.code)
-        sqlStatement.bindString(2, creditClass.group.toString())
+        sqlStatement.bindString(2, creditClass.group)
         sqlStatement.bindLong(3, creditClass.hocKy.id.toLong())
         sqlStatement.bindString(4, creditClass.subject.subId)
         sqlStatement.execute()
     }
 
-    fun getCreditClassByStudentID(studentID: String): CreditClass?{
-        var query = "SELECT " +
-                "(SELECT $studentCreditClassColumnCreditClassID FROM $tblStudentCreditClass b " +
-                "   WHERE b.$studentCreditClassColumnCreditClassID = a.$creditClasssColumnCode" +
-                "   AND b.$studentCreditClassColumnStudentID = ?) as id, " +
-                " $creditClasssColumnGroup as $creditClasssColumnGroup," +
-                " a.$creditClasssColumnHocKyID as $creditClasssColumnHocKyID, a.$creditClasssColumnSubjectID as $creditClasssColumnSubjectID" +
-                " FROM $tblCreditClass a;"
-        var cursor = writableDatabase.rawQuery(query, arrayOf(studentID))
-        if (cursor.count > 0){
-            var hocky = getHocKyByID(cursor.getString(2))
-            var subject = getSubjectByID(cursor.getString(3))
-            var creditClass = CreditClass(cursor.getString(0), cursor.getString(1).toInt(), hocky!!, subject!!)
-            return creditClass
+    fun getCreditClassID(hkid: Int, subjectID: String, group: String): String{
+        var query = "SELECT $creditClasssColumnCode FROM $tblCreditClass " +
+                " WHERE $creditClasssColumnHocKyID = $hkid AND UPPER($creditClasssColumnSubjectID) = UPPER('$subjectID') AND $creditClasssColumnGroup = '${group}' ;"
+//        Log.d("query", query)
+        var cur = writableDatabase.rawQuery(query, null)
+//        Log.d("cur", cur.count.toString())
+        if(cur.count > 0){
+            cur.moveToFirst()
+            return cur.getString(0)
         }
-        return null
+        return ""
+    }
+
+
+    fun getCreditClassWithScore(studentID: String): ArrayList<CreditClass>{
+        var dataset = ArrayList<CreditClass>()
+        var query = "SELECT a.$scoreColumnExamScore, a.$scoreColumnMidtermScore, a.$scoreColumnFinalScore, a.$scoreColumnFinalScoreNum, a.$scoreColumnFinalScoreChar, b.$creditClasssColumnCode, b.$creditClasssColumnGroup, b.$creditClasssColumnHocKyID, b.$creditClasssColumnSubjectID, c.$subjectColumnName, c.$subjectColumnNumOfCredit  " +
+                "   FROM $tblScore a INNER JOIN $tblCreditClass b INNER JOIN $tblSubject c" +
+                "   ON UPPER(a.$scoreColumnStudentID) = UPPER('$studentID') AND a.$scoreColumnCreditClassID = b.$creditClasssColumnCode AND a.$scoreColumnSubjectID = b.$creditClasssColumnSubjectID " +
+                "   AND b.$creditClasssColumnSubjectID = c.$subjectColumnID  ORDER BY  b.$creditClasssColumnHocKyID;"
+
+
+        var cursor = writableDatabase.rawQuery(query, null)
+
+        while (cursor.moveToNext()){
+
+            var score = Score(cursor.getFloat(0), cursor.getFloat(1), cursor.getFloat(2), cursor.getFloat(3), cursor.getString(4))
+            var hocky = getHocKyByID(cursor.getInt(7))
+            var subject = Subject(cursor.getString(8), cursor.getString(9), cursor.getFloat(10))
+            var creditClass = CreditClass(cursor.getString(5), cursor.getString(6), hocky!!, subject)
+            Log.d("subname", subject.name)
+            creditClass.score = score
+            dataset.add(creditClass)
+        }
+        return dataset
     }
 
     fun upsertToHoc(tohoc: ToHoc){
@@ -523,13 +558,27 @@ class QldtHelper: SQLiteOpenHelper{
         sqlStatement.execute()
     }
 
-    fun upsertStudentCreditClass(creditClass: CreditClass, student: User){
-        var query = "INSERT OR REPLACE INTO $tblStudentCreditClass VALUES(UPPER(?), ?);"
+    fun insertScore(creditClass: CreditClass, student: User){
+        var query = "INSERT OR REPLACE INTO $tblScore ($scoreColumnStudentID, $scoreColumnCreditClassID, $scoreColumnSubjectID) " +
+                "   VALUES(UPPER(?), ?, ?);"
         var sqlStatement = writableDatabase.compileStatement(query)
         sqlStatement.bindString(1, student.username)
         sqlStatement.bindString(2, creditClass.code)
+        sqlStatement.bindString(3, creditClass.subject.subId)
         sqlStatement.execute()
     }
+
+    fun updateScore(userId: String, creditClassID: String, subjectID: String,score: Score){
+        var query = "UPDATE $tblScore SET " +
+                "   $scoreColumnExamScore = ${score.examScore} ," +
+                "   $scoreColumnMidtermScore = ${score.midtermScore}," +
+                "   $scoreColumnFinalScore = ${score.finalScore}," +
+                "   $scoreColumnFinalScoreNum = ${score.finalSoreNum}," +
+                "   $scoreColumnFinalScoreChar = '${score.finalScoreChar}' " +
+                " WHERE UPPER($scoreColumnStudentID) = UPPER('$userId') AND UPPER($scoreColumnCreditClassID) = UPPER('$creditClassID') AND UPPER($scoreColumnSubjectID) = UPPER('$subjectID');"
+        writableDatabase.execSQL(query)
+    }
+
     fun upsertTKB(tkb: ThoiKhoaBieu){
         var query = "INSERT OR REPLACE INTO $tblTKB VALUES(?, ?, ?, ?, ?, ?);"
         var sqlStatement = writableDatabase.compileStatement(query)
@@ -545,14 +594,14 @@ class QldtHelper: SQLiteOpenHelper{
     fun getTKB(student: Student, tuan: Tuan, thu: Int): ArrayList<ToHoc>{
         var dataset = ArrayList<ToHoc>()
         var query = "SELECT b.$creditClasssColumnCode, b.$creditClasssColumnGroup, c.$subjectColumnID, c.$subjectColumnName, c.$subjectColumnNumOfCredit, d.$toHocColumnRoom, e.$lecturerColumnID, e.$lecturerColumnName, f.$tkbColumnID, f.$tkbColumnDate, f.$tkbColumnNumberOfLessons, g.$tietColumnTiet, g.$tietColumnStartTime, g.$tietColumnEndTime  " +
-                "   FROM  $tblStudentCreditClass a INNER JOIN $tblCreditClass b INNER JOIN $tblSubject c INNER JOIN $tblToHoc d INNER JOIN  $tblLecturer e INNER JOIN $tblToHocTKB dtof INNER JOIN $tblTKB f INNER JOIN $tblTiet g" +
-                "   ON UPPER(a.$studentCreditClassColumnStudentID) = UPPER('${student.username}') AND a.$studentCreditClassColumnCreditClassID = b.$creditClasssColumnCode" +
+                "   FROM  $tblScore a INNER JOIN $tblCreditClass b INNER JOIN $tblSubject c INNER JOIN $tblToHoc d INNER JOIN  $tblLecturer e INNER JOIN $tblToHocTKB dtof INNER JOIN $tblTKB f INNER JOIN $tblTiet g" +
+                "   ON UPPER(a.$scoreColumnStudentID) = UPPER('${student.username}') AND a.$scoreColumnCreditClassID = b.$creditClasssColumnCode" +
                 "       AND b.$creditClasssColumnSubjectID = c.$subjectColumnID AND d.$toHocColumnCreditClass = b.$creditClasssColumnCode " +
                 "       AND e.$lecturerColumnID = d.$toHocColumnLecturerID AND  d.$toHocColumnID = dtof.$toHocTKBColumnToHocID AND dtof.$toHocTKBColumnTKBID = f.$tkbColumnID AND f.$tkbColumnWeekID = ${tuan.tuanTuyetDoi} AND f.$tkbColumnDate = $thu AND f.$tkbColumnClassStart = g.$tietColumnTiet AND g.$tietColumnHocKyID = ${tuan.hocKy.id} ORDER BY g.$tietColumnTiet; "
         var cursor = readableDatabase.rawQuery(query, null)
         while (cursor.moveToNext()){
-            var subject = Subject(cursor.getString(2), cursor.getString(3), cursor.getInt(4))
-            var creditClass = CreditClass(cursor.getString(0), cursor.getInt(1), tuan.hocKy, subject)
+            var subject = Subject(cursor.getString(2), cursor.getString(3), cursor.getFloat(4))
+            var creditClass = CreditClass(cursor.getString(0), cursor.getString(1), tuan.hocKy, subject)
             var lecturer = Lecturer(cursor.getString(6), cursor.getString(7))
             var toHoc = ToHoc()
             toHoc.room = cursor.getString(5)
@@ -562,7 +611,6 @@ class QldtHelper: SQLiteOpenHelper{
             tiet.tiet = cursor.getInt(11)
             tiet.startTime = cursor.getString(12)
             tiet.endTime = cursor.getString(13)
-            Log.d("tiet", tiet.tiet.toString())
             var tkb = ThoiKhoaBieu(cursor.getString(8), cursor.getInt(9), tiet,cursor.getInt(10), tuan )
             toHoc.tkb = tkb
             dataset.add(toHoc)
@@ -575,9 +623,19 @@ class QldtHelper: SQLiteOpenHelper{
         var sqlStatement = writableDatabase.compileStatement(query)
         sqlStatement.bindString(1, tohoc.id)
         sqlStatement.bindString(2, tkb.id)
-        Log.d("upserting tohoc tkb", "${tohoc.id} ${tkb.id}")
         sqlStatement.execute()
     }
 
+
+    fun testGet(){
+        var query = "SELECT * FROM $tblScore ;"
+        var cursor = writableDatabase.rawQuery(query, null)
+        while(cursor.moveToNext()){
+            for(it in 0 until  cursor.columnCount){
+                var x: String? = cursor.getString(it)
+                Log.d("cs", x.toString()?:"null")
+            }
+        }
+    }
 
 }

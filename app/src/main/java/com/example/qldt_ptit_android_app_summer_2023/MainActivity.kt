@@ -26,11 +26,13 @@ class MainActivity : AppCompatActivity() {
         var student = intent.getSerializableExtra("student")
         viewPagerAdapter = ViewPagerMainAdapter(supportFragmentManager, student as Student)
         viewPager.adapter = viewPagerAdapter
-        bottomNavBar.setOnItemSelectedListener(object : OnItemSelectedListener{
+        bottomNavBar.setOnNavigationItemSelectedListener(object :
+            BottomNavigationView.OnNavigationItemSelectedListener {
             override fun onNavigationItemSelected(item: MenuItem): Boolean {
                 when(item.itemId){
                     R.id.mHome -> {viewPager.setCurrentItem(0, true)}
                     R.id.mTkb -> {viewPager.setCurrentItem(1, true)}
+                    R.id.mDiem -> {viewPager.setCurrentItem(2, true)}
                 }
                 return true
             }
@@ -45,11 +47,12 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onPageSelected(position: Int) {
-                Log.d("pst", position.toString())
                 when(position){
-                    0->{bottomNavBar.menu.get(0).setChecked(true)}
-                    1->{bottomNavBar.menu.get(1).setChecked(true)}
+                    0->{bottomNavBar.menu.findItem(R.id.mHome).setChecked(true)}
+                    1->{bottomNavBar.menu.findItem(R.id.mTkb).setChecked(true)}
+                    2->{bottomNavBar.menu.findItem(R.id.mDiem).setChecked(true)}
                 }
+                Log.d("pst at main", position.toString())
             }
 
             override fun onPageScrollStateChanged(state: Int) {

@@ -41,4 +41,7 @@ interface QldtService {
 
     @POST("sch/w-locdstkbtuanusertheohocky")
     suspend fun getTKB(@Header("Authorization") authorization: String, @Body filter: FilterRequest) : Response<TKBRespone>
+
+    @POST("srm/w-locdsdiemsinhvien")
+    suspend fun getScores(@Header("Authorization") authorization: String): Response<ScoreRespone>
 }

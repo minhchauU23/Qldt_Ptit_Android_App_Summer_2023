@@ -45,10 +45,10 @@ class TkbFragment(var student: Student) : Fragment() {
         itemHocKyAdapter = ArrayAdapter(requireContext(), androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, hkDataset)
         loadWeek(hkDataset.get(0))
         spnHocKy.adapter = itemHocKyAdapter
-        if(weekDataset.size > 0)
+        if(weekDataset.size > 0) {
             loadListTKB(weekDataset.get(0))
-        viewPagerTKB.adapter = viewPagerTKBAdapter
-
+            viewPagerTKB.adapter = viewPagerTKBAdapter
+        }
         spnHocKy.onItemSelectedListener = object : OnItemSelectedListener{
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
                 Log.d("Selection 0", "Selection 0")
