@@ -11,4 +11,9 @@
     <string name="lectureName">Tên giảng viên:</string>
     <string name="studyRoom">Phòng học:</string>
     <string name="timeStudy">Giờ học:</string>
+    <string name="midtermScore">Điểm giữa kỳ:</string>
+    <string name="examScore">Điểm thi:</string>
+    <string name="finalScore">Điểm tổng kết:</string>
+    <string name="finalScoreNum">Điểm tổng kết hệ 4:</string>
+    <string name="finalScoreChar">Điểm tông kết hệ chữ:</string>
 </resources>

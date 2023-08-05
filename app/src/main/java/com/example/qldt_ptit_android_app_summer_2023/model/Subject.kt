@@ -8,6 +8,6 @@ data class Subject(
     @SerializedName("ten_mon")
     var name: String,
     @SerializedName("so_tin_chi")
-    var numOfCredit: Int
+    var numOfCredit: Float
 ) {
 }

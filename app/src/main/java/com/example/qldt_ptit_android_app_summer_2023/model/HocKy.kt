@@ -15,6 +15,7 @@ data class HocKy(
     var endDate: String
 ) {
 
+
     fun getStartDate(): Date{
         return SimpleDateFormat("dd/MM/yyyy").parse(startDate)
     }
