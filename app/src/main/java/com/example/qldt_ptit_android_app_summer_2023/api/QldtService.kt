@@ -44,4 +44,7 @@ interface QldtService {
 
     @POST("srm/w-locdsdiemsinhvien")
     suspend fun getScores(@Header("Authorization") authorization: String): Response<ScoreRespone>
+
+    @POST("epm/w-locdslichthisvtheohocky")
+    suspend fun getLichThi(@Header("Authorization") authorization: String, @Body filter: FilterRequest): Response<LichThiRespone>
 }

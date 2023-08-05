@@ -23,21 +23,22 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         bottomNavBar = findViewById(R.id.bottom_nav_bar)
         viewPager = findViewById(R.id.view_pager_main)
-        var student = intent.getSerializableExtra("student")
-        viewPagerAdapter = ViewPagerMainAdapter(supportFragmentManager, student as Student)
+        var student = intent.getSerializableExtra("student") as Student
+        viewPagerAdapter = ViewPagerMainAdapter(supportFragmentManager, student )
         viewPager.adapter = viewPagerAdapter
-        bottomNavBar.setOnNavigationItemSelectedListener(object :
-            BottomNavigationView.OnNavigationItemSelectedListener {
+        bottomNavBar.setOnItemSelectedListener(object : OnItemSelectedListener{
             override fun onNavigationItemSelected(item: MenuItem): Boolean {
                 when(item.itemId){
                     R.id.mHome -> {viewPager.setCurrentItem(0, true)}
                     R.id.mTkb -> {viewPager.setCurrentItem(1, true)}
                     R.id.mDiem -> {viewPager.setCurrentItem(2, true)}
+                    R.id.mLichThi -> {viewPager.setCurrentItem(3, true)}
                 }
                 return true
             }
 
         })
+
         viewPager.addOnPageChangeListener(object : OnPageChangeListener{
             override fun onPageScrolled(
                 position: Int,
@@ -51,8 +52,8 @@ class MainActivity : AppCompatActivity() {
                     0->{bottomNavBar.menu.findItem(R.id.mHome).setChecked(true)}
                     1->{bottomNavBar.menu.findItem(R.id.mTkb).setChecked(true)}
                     2->{bottomNavBar.menu.findItem(R.id.mDiem).setChecked(true)}
+                    3->{bottomNavBar.menu.findItem(R.id.mLichThi).setChecked(true)}
                 }
-                Log.d("pst at main", position.toString())
             }
 
             override fun onPageScrollStateChanged(state: Int) {

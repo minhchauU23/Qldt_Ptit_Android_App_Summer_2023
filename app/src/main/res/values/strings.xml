@@ -16,4 +16,8 @@
     <string name="finalScore">Điểm tổng kết:</string>
     <string name="finalScoreNum">Điểm tổng kết hệ 4:</string>
     <string name="finalScoreChar">Điểm tông kết hệ chữ:</string>
+    <string name="examDate">Ngày thi:</string>
+    <string name="examRoom">Phòng thi:</string>
+    <string name="startExam">Giờ thi:</string>
+    <string name="minutes">Số phút:</string>
 </resources>

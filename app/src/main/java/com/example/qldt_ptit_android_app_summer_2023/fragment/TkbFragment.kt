@@ -1,7 +1,6 @@
 package com.example.qldt_ptit_android_app_summer_2023.fragment
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +9,7 @@ import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.viewpager.widget.ViewPager
 import com.example.qldt_ptit_android_app_summer_2023.R
 import com.example.qldt_ptit_android_app_summer_2023.adapter.ViewPagerTKBAdapter
@@ -40,18 +40,16 @@ class TkbFragment(var student: Student) : Fragment() {
         spnTuan = view.findViewById(R.id.spn_week)
         tabLayout = view.findViewById(R.id.tab_layout)
         viewPagerTKB = view.findViewById(R.id.tkb_viewpager)
-
+        viewPagerTKBAdapter = ViewPagerTKBAdapter(requireFragmentManager())
         loadHocKy()
-        itemHocKyAdapter = ArrayAdapter(requireContext(), androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, hkDataset)
-        loadWeek(hkDataset.get(0))
-        spnHocKy.adapter = itemHocKyAdapter
-        if(weekDataset.size > 0) {
+        if(hkDataset.size > 0){
+            loadWeek(hkDataset.get(0))
             loadListTKB(weekDataset.get(0))
-            viewPagerTKB.adapter = viewPagerTKBAdapter
         }
+        viewPagerTKB.adapter = viewPagerTKBAdapter
+
         spnHocKy.onItemSelectedListener = object : OnItemSelectedListener{
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
-                Log.d("Selection 0", "Selection 0")
                 var item = hkDataset.get(p2)
                 loadWeek(item)
             }
@@ -73,6 +71,8 @@ class TkbFragment(var student: Student) : Fragment() {
 
     fun loadHocKy(){
         hkDataset = dbHelper.getAllHocKy()
+        itemHocKyAdapter = ArrayAdapter(requireContext(), androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, hkDataset)
+        spnHocKy.adapter = itemHocKyAdapter
     }
 
     fun loadWeek(hocKy: HocKy){
@@ -83,13 +83,12 @@ class TkbFragment(var student: Student) : Fragment() {
 
 
     fun loadListTKB(tuan: Tuan){
-        viewPagerTKBAdapter = ViewPagerTKBAdapter(childFragmentManager)
+        viewPagerTKBAdapter = ViewPagerTKBAdapter(requireFragmentManager())
         toHocDataset = ArrayList()
         for(date in 2..7){
             toHocDataset = dbHelper.getTKB(student, tuan,date)
             var itemTkb = ItemTKBFragment(toHocDataset)
             viewPagerTKBAdapter.addFragment(itemTkb, "Thứ $date")
-            Log.d("tkb", toHocDataset.toString())
         }
         viewPagerTKB.adapter = viewPagerTKBAdapter
         tabLayout.setupWithViewPager(viewPagerTKB)

@@ -205,6 +205,35 @@ class QldtHelper: SQLiteOpenHelper{
             "    REFERENCES $tblCreditClass($creditClasssColumnCode, $creditClasssColumnSubjectID)" +
             ");"
 
+    val tblLichThi = "lich_thi"
+    val lichThiColumnID = "id"
+    val lichThiColumnStudentID = "mssv"
+    val lichThiColumnSubID = "subid"
+    val lichThiColumnRoom = "room"
+    val lichThiColumnDate = "date"
+    val lichThiColumnStartTime = "start_time"
+    val lichThiColumnMinutes = "minutes"
+    val lichThiColumnFormat = "format"
+    val lichThiColumnHKID = "hkid"
+    val createTableLichThi = "CREATE TABLE IF NOT EXISTS $tblLichThi(" +
+            " $lichThiColumnID TEXT," +
+            " $lichThiColumnStudentID TEXT," +
+            " $lichThiColumnSubID TEXT," +
+            " $lichThiColumnRoom TEXT," +
+            " $lichThiColumnDate TEXT," +
+            " $lichThiColumnStartTime TEXT," +
+            " $lichThiColumnMinutes TEXT," +
+            " $lichThiColumnFormat TEXT," +
+            " $lichThiColumnHKID INT," +
+            " PRIMARY KEY($lichThiColumnID, $lichThiColumnStudentID, $lichThiColumnSubID)," +
+            " FOREIGN KEY ($lichThiColumnStudentID) " +
+            "   REFERENCES $tblStudent($studentColumnStudentCode)," +
+            " FOREIGN KEY ($lichThiColumnSubID) " +
+            "   REFERENCES $tblSubject($subjectColumnID)," +
+            " FOREIGN KEY ($lichThiColumnHKID) " +
+            "   REFERENCES $tblHocKy($hocKyColumnID)" +
+            ");"
+
     val tblTKB = "tkb"
     val tkbColumnID = "id"
     val tkbColumnDate = "date"
@@ -225,7 +254,7 @@ class QldtHelper: SQLiteOpenHelper{
             " FOREIGN KEY ($tkbColumnClassStart, $tkbColumnHocKyID) " +
             "   REFERENCES $tblTiet($tietColumnTiet, $tietColumnHocKyID)" +
             ");"
-    
+
 
     val tblToHoc = "to_hoc"
     val toHocColumnID = "id"
@@ -269,6 +298,7 @@ class QldtHelper: SQLiteOpenHelper{
         p0?.execSQL(createTableToHoc)
         p0?.execSQL(createTableToHocTKB)
         p0?.execSQL(createTableScore)
+        p0?.execSQL(createTableLichThi)
     }
 
     override fun onUpgrade(p0: SQLiteDatabase?, p1: Int, p2: Int) {
@@ -348,9 +378,7 @@ class QldtHelper: SQLiteOpenHelper{
     fun getStudent(user: User): Student?{
         var query = "SELECT * FROM $tblStudent WHERE UPPER($studentColumnStudentCode) = UPPER(?);"
         var cursor = writableDatabase.rawQuery(query, arrayOf(user.username))
-        Log.d("usname in get", user.username)
         if(cursor.count > 0){
-            Log.d("get student", "in if block")
             cursor.moveToFirst()
             var student = Student(user)
             student.gender = cursor.getString(1)
@@ -464,7 +492,6 @@ class QldtHelper: SQLiteOpenHelper{
 
     fun upsertSubject(subject: Subject){
         val query = "INSERT OR REPLACE INTO $tblSubject VALUES(?, ?, ?);"
-        Log.d("sub", subject.subId + " " + subject.name)
         val sqlStatement = writableDatabase.compileStatement(query)
         sqlStatement.bindString(1, subject.subId)
         sqlStatement.bindString(2, subject.name)
@@ -501,7 +528,6 @@ class QldtHelper: SQLiteOpenHelper{
 
     fun upsertCreditClass(creditClass: CreditClass){
         var query = "INSERT OR REPLACE INTO $tblCreditClass VALUES(?, ?, ?, ?);"
-        Log.d("cred", "${creditClass.code}  ${creditClass.subject.subId}  ${creditClass.subject.name}")
         var sqlStatement = writableDatabase.compileStatement(query)
         sqlStatement.bindString(1, creditClass.code)
         sqlStatement.bindString(2, creditClass.group)
@@ -513,9 +539,7 @@ class QldtHelper: SQLiteOpenHelper{
     fun getCreditClassID(hkid: Int, subjectID: String, group: String): String{
         var query = "SELECT $creditClasssColumnCode FROM $tblCreditClass " +
                 " WHERE $creditClasssColumnHocKyID = $hkid AND UPPER($creditClasssColumnSubjectID) = UPPER('$subjectID') AND $creditClasssColumnGroup = '${group}' ;"
-//        Log.d("query", query)
         var cur = writableDatabase.rawQuery(query, null)
-//        Log.d("cur", cur.count.toString())
         if(cur.count > 0){
             cur.moveToFirst()
             return cur.getString(0)
@@ -530,22 +554,56 @@ class QldtHelper: SQLiteOpenHelper{
                 "   FROM $tblScore a INNER JOIN $tblCreditClass b INNER JOIN $tblSubject c" +
                 "   ON UPPER(a.$scoreColumnStudentID) = UPPER('$studentID') AND a.$scoreColumnCreditClassID = b.$creditClasssColumnCode AND a.$scoreColumnSubjectID = b.$creditClasssColumnSubjectID " +
                 "   AND b.$creditClasssColumnSubjectID = c.$subjectColumnID  ORDER BY  b.$creditClasssColumnHocKyID;"
-
-
         var cursor = writableDatabase.rawQuery(query, null)
-
         while (cursor.moveToNext()){
-
             var score = Score(cursor.getFloat(0), cursor.getFloat(1), cursor.getFloat(2), cursor.getFloat(3), cursor.getString(4))
             var hocky = getHocKyByID(cursor.getInt(7))
             var subject = Subject(cursor.getString(8), cursor.getString(9), cursor.getFloat(10))
             var creditClass = CreditClass(cursor.getString(5), cursor.getString(6), hocky!!, subject)
-            Log.d("subname", subject.name)
             creditClass.score = score
             dataset.add(creditClass)
         }
         return dataset
     }
+
+    fun upsertLichThi(lichThi: LichThi){
+        var query = "INSERT OR REPLACE INTO $tblLichThi VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);"
+        var sqLiteStatement = writableDatabase.compileStatement(query)
+        sqLiteStatement.bindString(1, lichThi.id)
+        sqLiteStatement.bindString(2, lichThi.student!!.username)
+        sqLiteStatement.bindString(3, lichThi.subject!!.subId)
+        sqLiteStatement.bindString(4, lichThi.room)
+        sqLiteStatement.bindString(5, lichThi.date)
+        sqLiteStatement.bindString(6, lichThi.startTime)
+        sqLiteStatement.bindString(7, lichThi.minutes)
+        sqLiteStatement.bindString(8, lichThi.format)
+        sqLiteStatement.bindLong(9, lichThi.hocKy!!.id.toLong())
+        Log.d("upsert", "${lichThi.subject!!.subId} ${lichThi.id}")
+        sqLiteStatement.execute()
+    }
+
+    fun getLichThiByHocKy(hocKy: HocKy, student: User): ArrayList<LichThi>{
+        var dataset = ArrayList<LichThi>()
+        var query = "SELECT a.$lichThiColumnID, a.$lichThiColumnRoom, a.$lichThiColumnDate, a.$lichThiColumnStartTime, a.$lichThiColumnMinutes, a.$lichThiColumnFormat, b.$subjectColumnID, b.$subjectColumnName, b.$subjectColumnNumOfCredit " +
+                "  FROM $tblLichThi a INNER JOIN $tblSubject b " +
+                " ON a.$lichThiColumnHKID = ${hocKy.id} AND UPPER(a.$lichThiColumnStudentID) = UPPER('${student.username}') AND a.$lichThiColumnSubID = b.$subjectColumnID;"
+        var cursor = writableDatabase.rawQuery(query, null)
+        Log.d("get", query)
+        while (cursor.moveToNext()){
+            var sub =Subject(cursor.getString(6), cursor.getString(7), cursor.getFloat(8))
+            var lichThi = LichThi()
+            lichThi.id = cursor.getString(0)
+            lichThi.room = cursor.getString(1)
+            lichThi.date = cursor.getString(2)
+            lichThi.startTime = cursor.getString(3)
+            lichThi.minutes = cursor.getString(4)
+            lichThi.format =cursor.getString(6)
+            lichThi.subject = sub
+            dataset.add(lichThi)
+        }
+        return dataset
+    }
+
 
     fun upsertToHoc(tohoc: ToHoc){
         var query = "INSERT OR REPLACE INTO $tblToHoc VALUES(?, ?, ?, ?);"
@@ -628,12 +686,13 @@ class QldtHelper: SQLiteOpenHelper{
 
 
     fun testGet(){
-        var query = "SELECT * FROM $tblScore ;"
+        var query = "SELECT * FROM $tblLichThi WHERE $lichThiColumnHKID = 20201;"
         var cursor = writableDatabase.rawQuery(query, null)
+        Log.d("test", cursor.count.toString())
         while(cursor.moveToNext()){
             for(it in 0 until  cursor.columnCount){
                 var x: String? = cursor.getString(it)
-                Log.d("cs", x.toString()?:"null")
+//                L
             }
         }
     }
