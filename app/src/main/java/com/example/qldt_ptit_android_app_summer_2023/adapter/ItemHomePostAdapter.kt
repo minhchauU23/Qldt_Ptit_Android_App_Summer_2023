@@ -33,7 +33,6 @@ class ItemHomePostAdapter(var context: Context, var dataset: ArrayList<Post>, va
         holder.itemView.setOnClickListener {
             onItemClickListener.setOnItemClick(item)
         }
-        Log.d("txt_title", item.title)
     }
 
     override fun getItemCount(): Int {

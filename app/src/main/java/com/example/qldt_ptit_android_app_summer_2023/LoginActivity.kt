@@ -82,7 +82,6 @@ class LoginActivity : AppCompatActivity() {
                     user.roles = body?.roles!!
                     user.accessToken = body?.accessToken!!
                     user.tokenType = body?.tokenType!!
-                    Log.d("user", user.roles)
                 }
                 else{
                     withContext(Dispatchers.Main){
@@ -124,6 +123,28 @@ class LoginActivity : AppCompatActivity() {
                     }
                 }
 
+            }
+            var  student: Student? = null
+            var getInforJob = launch {
+                loginJob.join()
+                if(user.isInitialized()){
+                    when(user.roles){
+                        "SINHVIEN"->{
+                            var respone = retrofit.getInfor("${user.tokenType} ${user.accessToken}")
+                            var body = respone.body()
+                            if(respone.code() == 200){
+                                student = body?.data as Student
+                                student?.username = user.username
+                                student?.password = user.password
+                                student?.fullName = user.fullName
+                                student?.roles = user.roles
+                                student?.accessToken = user.accessToken
+                                student?.tokenType = user.tokenType
+                                dbHelper.upsertStudent(student!!)
+                            }
+                        }
+                    }
+                }
             }
 
             var listHocKyRespone: ArrayList<HocKy> = ArrayList()
@@ -215,13 +236,13 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
 
+
+
             val getScoreJob = launch {
                 getTKBJob.join()
                 var respone = retrofit.getScores("${user.tokenType} ${user.accessToken}")
-                Log.d("score job", respone.message())
                 if(respone.code() == 200){
                     var listRaw = respone.body()!!.data.listScore
-                    Log.d("respone score", respone.body().toString())
                     for(raw in listRaw){
                         var hocKyID = raw.hocKy
                         for(scoreRaw in raw.listScore){
@@ -237,31 +258,42 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
 
-            var getInforJob = launch {
-                loginJob.join()
-                delay(4000)
-                if(user.isInitialized()){
-                    when(user.roles){
-                        "SINHVIEN"->{
-                            var respone = retrofit.getInfor("${user.tokenType} ${user.accessToken}")
-                            var body = respone.body()
-                            if(respone.code() == 200){
-                                var student = body?.data
-                                student?.username = user.username
-                                student?.password = user.password
-                                student?.fullName = user.fullName
-                                student?.roles = user.roles
-                                student?.accessToken = user.accessToken
-                                student?.tokenType = user.tokenType
-                                dbHelper.upsertStudent(student!!)
-                                var intent = Intent(applicationContext, MainActivity::class.java)
-                                intent.putExtra("student", student)
-                                startActivity(intent)
-                            }
+            val getLichThiJob = launch {
+                getTKBJob.join()
+                for(hk in listHocKyRespone){
+                    var filterRequest = FilterRequest()
+                    filterRequest.addFilter("hoc_ky", hk.id)
+                    filterRequest.addAdditional("paging", mapOf("limit" to 100, "page" to 1))
+                    filterRequest.addAdditional("ordering", arrayListOf(mapOf("name" to null, "order_type" to null)))
+                    var lichThiRespone = retrofit.getLichThi("${user.tokenType} ${user.accessToken}", filterRequest)
+                    if(lichThiRespone.code() == 200){
+//                        Log.d("raw", lichThiRespone.body().toString())
+                        var raw = lichThiRespone.body()!!.data.listLichThi
+                        if (raw == null || raw.size == 0) continue
+                        for(lich in raw){
+                            var sub = Subject(lich.subID, "", 0f)
+                            var lichThi = LichThi()
+                            lichThi.id = lich.id
+                            lichThi.hocKy = hk
+                            lichThi.format = lich.format
+                            lichThi.date = lich.date
+                            lichThi.minutes = lich.minutes
+                            lichThi.room = lich.room
+                            lichThi.subject = sub
+                            lichThi.startTime = lich.startTime
+                            lichThi.student = user
+                            dbHelper.upsertLichThi(lichThi)
                         }
                     }
                 }
             }
+            val switchJob = launch {
+                getInforJob.join()
+                var intent = Intent(applicationContext, MainActivity::class.java)
+                intent.putExtra("student", student)
+                startActivity(intent)
+            }
+
         }
     }
 
