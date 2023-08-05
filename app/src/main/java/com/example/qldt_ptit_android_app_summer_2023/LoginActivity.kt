@@ -205,6 +205,7 @@ class LoginActivity : AppCompatActivity() {
                                             toHoc.tkb = tkbRaw
                                             dbHelper.upsertToHoc(toHoc)
                                             dbHelper.upsertToHocTKB(toHoc, tkbRaw)
+
                                         }
                                     }
                                 }
@@ -216,7 +217,6 @@ class LoginActivity : AppCompatActivity() {
 
             val getScoreJob = launch {
                 getTKBJob.join()
-//                delay(10000)
                 var respone = retrofit.getScores("${user.tokenType} ${user.accessToken}")
                 Log.d("score job", respone.message())
                 if(respone.code() == 200){
@@ -229,7 +229,6 @@ class LoginActivity : AppCompatActivity() {
                                 var creid = dbHelper.getCreditClassID(hocKyID.toInt(), scoreRaw.subID, scoreRaw.group)
                                 if(!creid.equals(""))
                                     launch {
-                                        Log.d("creid", "$creid ${scoreRaw.subID} ${scoreRaw.subName}")
                                         dbHelper.updateScore(user.username, creid,scoreRaw.subID ,Score(scoreRaw.examScore.toFloat(), scoreRaw.midtermScore.toFloat(), scoreRaw.finalScore.toFloat(), scoreRaw.finalScoreNum.toFloat(), scoreRaw.finalScoreChar))
                                     }
                             }
@@ -240,8 +239,7 @@ class LoginActivity : AppCompatActivity() {
 
             var getInforJob = launch {
                 loginJob.join()
-//                dbHelper.testGet()
-//                delay(5000)
+                delay(4000)
                 if(user.isInitialized()){
                     when(user.roles){
                         "SINHVIEN"->{

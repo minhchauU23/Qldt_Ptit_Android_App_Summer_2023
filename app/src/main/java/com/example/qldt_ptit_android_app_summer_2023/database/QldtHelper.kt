@@ -225,7 +225,7 @@ class QldtHelper: SQLiteOpenHelper{
             " FOREIGN KEY ($tkbColumnClassStart, $tkbColumnHocKyID) " +
             "   REFERENCES $tblTiet($tietColumnTiet, $tietColumnHocKyID)" +
             ");"
-
+    
 
     val tblToHoc = "to_hoc"
     val toHocColumnID = "id"
