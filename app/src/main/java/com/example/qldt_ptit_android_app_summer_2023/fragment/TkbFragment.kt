@@ -44,7 +44,8 @@ class TkbFragment(var student: Student) : Fragment() {
         loadHocKy()
         if(hkDataset.size > 0){
             loadWeek(hkDataset.get(0))
-            loadListTKB(weekDataset.get(0))
+            if(weekDataset.size > 0)
+                loadListTKB(weekDataset.get(0))
         }
         viewPagerTKB.adapter = viewPagerTKBAdapter
 
