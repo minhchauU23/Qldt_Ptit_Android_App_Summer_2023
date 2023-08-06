@@ -23,8 +23,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         bottomNavBar = findViewById(R.id.bottom_nav_bar)
         viewPager = findViewById(R.id.view_pager_main)
-        var student = intent.getSerializableExtra("student") as Student
-        viewPagerAdapter = ViewPagerMainAdapter(supportFragmentManager, student )
+        var student = intent.getSerializableExtra("student") as Student?
+        viewPagerAdapter = ViewPagerMainAdapter(supportFragmentManager, student!! )
         viewPager.adapter = viewPagerAdapter
         bottomNavBar.setOnItemSelectedListener(object : OnItemSelectedListener{
             override fun onNavigationItemSelected(item: MenuItem): Boolean {
@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
                     R.id.mTkb -> {viewPager.setCurrentItem(1, true)}
                     R.id.mDiem -> {viewPager.setCurrentItem(2, true)}
                     R.id.mLichThi -> {viewPager.setCurrentItem(3, true)}
+                    R.id.mInfor ->{viewPager.setCurrentItem(4, true)}
                 }
                 return true
             }
@@ -53,6 +54,7 @@ class MainActivity : AppCompatActivity() {
                     1->{bottomNavBar.menu.findItem(R.id.mTkb).setChecked(true)}
                     2->{bottomNavBar.menu.findItem(R.id.mDiem).setChecked(true)}
                     3->{bottomNavBar.menu.findItem(R.id.mLichThi).setChecked(true)}
+                    4->{bottomNavBar.menu.findItem(R.id.mInfor).setChecked(true)}
                 }
             }
 

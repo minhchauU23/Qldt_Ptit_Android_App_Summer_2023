@@ -65,7 +65,8 @@
                 android:id="@+id/tkb_viewpager"
                 android:layout_width="match_parent"
                 android:layout_marginTop="50dp"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                >
             </androidx.viewpager.widget.ViewPager>
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

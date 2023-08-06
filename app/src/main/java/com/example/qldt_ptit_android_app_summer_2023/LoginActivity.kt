@@ -6,20 +6,24 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v4.os.IResultReceiver.Default
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.Toast
 import com.example.qldt_ptit_android_app_summer_2023.api.QldtService
 import com.example.qldt_ptit_android_app_summer_2023.database.QldtHelper
 import com.example.qldt_ptit_android_app_summer_2023.model.*
 import kotlinx.coroutines.*
+import java.net.SocketTimeoutException
 
 class LoginActivity : AppCompatActivity() {
     lateinit var edtUsername: EditText
     lateinit var edtPassword: EditText
     lateinit var btnLogin: Button
+    lateinit var progressBar: ProgressBar
     var retrofit = QldtService.retrofit
 
     lateinit var dbHelper: QldtHelper
@@ -29,9 +33,12 @@ class LoginActivity : AppCompatActivity() {
         edtUsername = findViewById(R.id.edt_username)
         edtPassword = findViewById(R.id.edt_password)
         btnLogin = findViewById(R.id.btn_login)
+        progressBar = findViewById(R.id.ptit_progress)
+        progressBar.visibility = View.GONE
         QldtHelper.context = applicationContext
         dbHelper = QldtHelper.getInstance()
         btnLogin.setOnClickListener { view:View ->
+            progressBar.visibility = View.VISIBLE
             var username = edtUsername.text.toString()
             var password = edtPassword.text.toString()
             var user = User(username, password)
@@ -39,9 +46,11 @@ class LoginActivity : AppCompatActivity() {
                 if(isConnectInternet())
                     callApi(user)
                 else loginWithoutInternet(user)
-
             }
-            else Toast.makeText(applicationContext, "Invalid username or password", Toast.LENGTH_LONG)
+            else {
+                Toast.makeText(applicationContext, "Invalid username or password", Toast.LENGTH_LONG)
+                progressBar.visibility = View.GONE
+            }
         }
     }
 
@@ -60,10 +69,15 @@ class LoginActivity : AppCompatActivity() {
         return false
     }
 
+
     fun loginWithoutInternet(user: User){
         if(dbHelper.getUser(user)){
+            var student = dbHelper.getStudent(user)
             var intent = Intent(applicationContext, MainActivity::class.java)
+            intent.putExtra("student", student)
+            progressBar.visibility = View.GONE
             startActivity(intent)
+
             finish()
         }
         else{
@@ -72,31 +86,45 @@ class LoginActivity : AppCompatActivity() {
     }
 
     fun callApi(user: User){
-        var cou = GlobalScope.launch(Dispatchers.IO) {
+        var cou = CoroutineScope(Dispatchers.IO).launch {
+            var ok = true
             var loginJob = launch {
-                var respone = retrofit.login(user.username, user.password)
-                Log.d("res code", respone.code().toString())
-                if(respone.code() == 200){
-                    var body = respone.body()
-                    user.fullName = body?.fullName
-                    user.roles = body?.roles!!
-                    user.accessToken = body?.accessToken!!
-                    user.tokenType = body?.tokenType!!
-                }
-                else{
-                    withContext(Dispatchers.Main){
-                        Toast.makeText(applicationContext, "Invalid username or password", Toast.LENGTH_LONG).show()
+                try {
+                    var respone = retrofit.login(user.username, user.password)
+                    if(respone.code() == 200){
+                        var body = respone.body()
+                        user.fullName = body?.fullName
+                        user.roles = body?.roles!!
+                        user.accessToken = body?.accessToken!!
+                        user.tokenType = body?.tokenType!!
                     }
+                    else{
+                        withContext(Dispatchers.Main){
+                            Toast.makeText(applicationContext, "Invalid username or password", Toast.LENGTH_LONG).show()
+                        }
+                        delay(200)
+                    }
+                }catch (ex: SocketTimeoutException){
+                    ok = false
+                    withContext(Dispatchers.Main){
+                        loginWithoutInternet(user)
+                    }
+
                 }
+
             }
+
             var insertUserJob = launch {
                 loginJob.join()
-                if(user.isInitialized()){
+                if(!ok) this.cancel()
+                if(user.isInitialized() ){
                     dbHelper.insertUser(user)
                 }
             }
+
             var getHomePostJob = launch {
                 loginJob.join()
+                if(!ok) this.cancel()
                 var filter = FilterRequest()
                 filter.addFilter("ky_hieu", "tb")
                 filter.addFilter("is_hien_thi", true)
@@ -127,7 +155,7 @@ class LoginActivity : AppCompatActivity() {
             var  student: Student? = null
             var getInforJob = launch {
                 loginJob.join()
-                if(user.isInitialized()){
+                if(user.isInitialized() && ok){
                     when(user.roles){
                         "SINHVIEN"->{
                             var respone = retrofit.getInfor("${user.tokenType} ${user.accessToken}")
@@ -150,7 +178,7 @@ class LoginActivity : AppCompatActivity() {
             var listHocKyRespone: ArrayList<HocKy> = ArrayList()
             var getHocKyJob = launch {
                 loginJob.join()
-                if(user.isInitialized()){
+                if(user.isInitialized() && ok){
                     var filter = FilterRequest()
                     filter.addFilter("is_tieng_anh", null)
                     filter.addAdditional("paging", mapOf("limit" to 100, "page" to 1))
@@ -165,7 +193,8 @@ class LoginActivity : AppCompatActivity() {
 
             val insertHocKyJob = launch {
                 getHocKyJob.join()
-                if(listHocKyRespone.size > 0){
+
+                if(listHocKyRespone.size > 0 && ok){
                     for(hocky in listHocKyRespone){
                         dbHelper.upsertHocKy(hocky)
                     }
@@ -174,7 +203,7 @@ class LoginActivity : AppCompatActivity() {
 
             val getTKBJob = launch {
                 getHocKyJob.join()
-                if(listHocKyRespone.size > 0){
+                if(listHocKyRespone.size > 0 && ok){
                     for(hocky in listHocKyRespone){
                         var filter = FilterRequest()
                         filter.addFilter("hoc_ky", hocky.id)
@@ -240,58 +269,71 @@ class LoginActivity : AppCompatActivity() {
 
             val getScoreJob = launch {
                 getTKBJob.join()
-                var respone = retrofit.getScores("${user.tokenType} ${user.accessToken}")
-                if(respone.code() == 200){
-                    var listRaw = respone.body()!!.data.listScore
-                    for(raw in listRaw){
-                        var hocKyID = raw.hocKy
-                        for(scoreRaw in raw.listScore){
-                            if(!scoreRaw.examScore.equals("")){
-                                var creid = dbHelper.getCreditClassID(hocKyID.toInt(), scoreRaw.subID, scoreRaw.group)
-                                if(!creid.equals(""))
-                                    launch {
-                                        dbHelper.updateScore(user.username, creid,scoreRaw.subID ,Score(scoreRaw.examScore.toFloat(), scoreRaw.midtermScore.toFloat(), scoreRaw.finalScore.toFloat(), scoreRaw.finalScoreNum.toFloat(), scoreRaw.finalScoreChar))
-                                    }
+                if(ok){
+                    var respone = retrofit.getScores("${user.tokenType} ${user.accessToken}")
+                    if(respone.code() == 200){
+                        var listRaw = respone.body()!!.data.listScore
+                        for(raw in listRaw){
+                            var hocKyID = raw.hocKy
+                            for(scoreRaw in raw.listScore){
+                                if(!scoreRaw.examScore.equals("")){
+                                    var creid = dbHelper.getCreditClassID(hocKyID.toInt(), scoreRaw.subID, scoreRaw.group)
+                                    if(!creid.equals(""))
+                                        launch {
+                                            dbHelper.updateScore(user.username, creid,scoreRaw.subID ,Score(scoreRaw.examScore.toFloat(), scoreRaw.midtermScore.toFloat(), scoreRaw.finalScore.toFloat(), scoreRaw.finalScoreNum.toFloat(), scoreRaw.finalScoreChar))
+                                        }
+                                }
                             }
                         }
                     }
                 }
+
             }
 
             val getLichThiJob = launch {
                 getTKBJob.join()
-                for(hk in listHocKyRespone){
-                    var filterRequest = FilterRequest()
-                    filterRequest.addFilter("hoc_ky", hk.id)
-                    filterRequest.addAdditional("paging", mapOf("limit" to 100, "page" to 1))
-                    filterRequest.addAdditional("ordering", arrayListOf(mapOf("name" to null, "order_type" to null)))
-                    var lichThiRespone = retrofit.getLichThi("${user.tokenType} ${user.accessToken}", filterRequest)
-                    if(lichThiRespone.code() == 200){
+                if(ok){
+                    for(hk in listHocKyRespone){
+                        var filterRequest = FilterRequest()
+                        filterRequest.addFilter("hoc_ky", hk.id)
+                        filterRequest.addAdditional("paging", mapOf("limit" to 100, "page" to 1))
+                        filterRequest.addAdditional("ordering", arrayListOf(mapOf("name" to null, "order_type" to null)))
+                        var lichThiRespone = retrofit.getLichThi("${user.tokenType} ${user.accessToken}", filterRequest)
+                        if(lichThiRespone.code() == 200){
 //                        Log.d("raw", lichThiRespone.body().toString())
-                        var raw = lichThiRespone.body()!!.data.listLichThi
-                        if (raw == null || raw.size == 0) continue
-                        for(lich in raw){
-                            var sub = Subject(lich.subID, "", 0f)
-                            var lichThi = LichThi()
-                            lichThi.id = lich.id
-                            lichThi.hocKy = hk
-                            lichThi.format = lich.format
-                            lichThi.date = lich.date
-                            lichThi.minutes = lich.minutes
-                            lichThi.room = lich.room
-                            lichThi.subject = sub
-                            lichThi.startTime = lich.startTime
-                            lichThi.student = user
-                            dbHelper.upsertLichThi(lichThi)
+                            var raw = lichThiRespone.body()!!.data.listLichThi
+                            if (raw == null || raw.size == 0) continue
+                            for(lich in raw){
+                                var sub = Subject(lich.subID, "", 0f)
+                                var lichThi = LichThi()
+                                lichThi.id = lich.id
+                                lichThi.hocKy = hk
+                                lichThi.format = lich.format
+                                lichThi.date = lich.date
+                                lichThi.minutes = lich.minutes
+                                lichThi.room = lich.room
+                                lichThi.subject = sub
+                                lichThi.startTime = lich.startTime
+                                lichThi.student = user
+                                dbHelper.upsertLichThi(lichThi)
+                            }
                         }
                     }
                 }
+
             }
             val switchJob = launch {
                 getInforJob.join()
-                var intent = Intent(applicationContext, MainActivity::class.java)
-                intent.putExtra("student", student)
-                startActivity(intent)
+                if(ok){
+                    withContext(Dispatchers.Main){
+                        progressBar.visibility = View.GONE
+
+                    }
+                    var intent = Intent(applicationContext, MainActivity::class.java)
+                    intent.putExtra("student", student)
+                    startActivity(intent)
+                }
+
             }
 
         }

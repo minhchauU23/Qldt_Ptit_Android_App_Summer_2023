@@ -1,5 +1,6 @@
 package com.example.qldt_ptit_android_app_summer_2023.model
 
+import android.net.Uri
 import com.google.gson.annotations.SerializedName
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -48,6 +49,7 @@ class Student(username: String, password: String) : User(username, password), ja
     var inCode: Int? = null
     @SerializedName("nhhk_ra")
     var outCode: Int? = null
+    var avt: Uri? = null
 
     fun getDateOfBirth(): Date{
         return SimpleDateFormat("dd/MM/yyyy").parse(dateOfBirth)
