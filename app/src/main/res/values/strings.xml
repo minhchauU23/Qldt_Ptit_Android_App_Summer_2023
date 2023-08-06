@@ -20,4 +20,12 @@
     <string name="examRoom">Phòng thi:</string>
     <string name="startExam">Giờ thi:</string>
     <string name="minutes">Số phút:</string>
+    <string name="fullname">Họ và tên:</string>
+    <string name="mssv">Mã số sinh viên:</string>
+    <string name="gender">Giới tính:</string>
+    <string name="place_of_birth">Nơi sinh:</string>
+    <string name="email">Email:</string>
+    <string name="classname">Lớp:</string>
+    <string name="major">Chuyên ngành:</string>
+    <string name="study_year">Niên khóa:</string>
 </resources>
